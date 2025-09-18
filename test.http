@@ -1,0 +1,9 @@
+POST http://localhost:4000/api/move-requests
+Content-Type: application/json
+
+{
+  "serviceType": "small",
+  "moveDate": "2025-12-01",
+  "departure": "서울 강남구 역삼동",
+  "destination": "경기도 수원시 팔달구"
+}
