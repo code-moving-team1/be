@@ -1,5 +1,17 @@
+// src/lib/prisma.ts
 import { PrismaClient } from "@prisma/client";
 
-export const prisma = new PrismaClient({
-  // log: ["query", "info", "warn", "error"],
-});
+declare global {
+  // Prevent multiple instances of Prisma Client in development
+  // (Hot reload 환경에서 유용)
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
+}
+
+export const prisma =
+  global.prisma ||
+  new PrismaClient({
+    log: ["query", "error", "warn"], // 필요에 따라 로깅 추가
+  });
+
+if (process.env.NODE_ENV !== "production") global.prisma = prisma;

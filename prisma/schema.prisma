@@ -1,14 +1,317 @@
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum ServiceType {
+    small
+    family
+    office
+}
+
+enum Region {
+    서울
+    경기
+    인천
+    강원
+    충북
+    충남
+    세종
+    대전
+    전북
+    전남
+    광주
+    경북
+    경남
+    대구
+    울산
+    부산
+    제주
+}
+
+enum DirectRequestStatus {
+    pending // 대기 중
+    accepted // 수락됨
+    rejected // 거절됨
+    expired // 기사가 지정 요청에 응답하지 않고 기한이 종료됨
+}
+
+enum QuoteStatus {
+    pending // 대기 중
+    accepted // 수락됨
+    rejected // 거절됨  
+    expired // 고객이 아무 견적도 선택하지 않고 기한이 종료됨
+}
+
+enum QuoteType {
+    normal
+    direct
+}
+
+enum NotificationType {
+    NEW_QUOTE_RECEIVED
+    MOVE_REQUEST_DECIDED
+    D_DAY_ALARM
+    DIRECT_QUOTE_REQ_DENIED
+    QUOTE_ACCEPTED
+    QUOTE_REJECTED
+    REVIEW_RECEIVED
+    ETC
+}
+
+enum UserType {
+    CUSTOMER
+    MOVER
+}
+
+enum NotificationPriority {
+    LOW
+    MEDIUM
+    HIGH
+    URGENT
+}
+
+enum MoveRequestStatus {
+    ACTIVE // 진행 중인 상태
+    COMPLETED // 완료된 상태
+    FINISHED // 고객이 특정 견적을 선택하지 않고 기한이 지나 종료된 상태
+}
+
+enum UserStatus {
+    ACTIVE
+    INACTIVE
+    SUSPENDED
+    DELETED
 }
 
 model Customer {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  nickname String
+    id                   Int                   @id @default(autoincrement())
+    email                String                @unique @db.VarChar(255)
+    password             String                @db.VarChar(255)
+    phone                String                @db.VarChar(20)
+    img                  String                @default("") @db.VarChar(500)
+    region               Region
+    isActive             Boolean               @default(true)
+    deleted              Boolean               @default(false)
+    lastLoginAt          DateTime?
+    createdAt            DateTime              @default(now())
+    updatedAt            DateTime              @updatedAt
+    customerServiceTypes CustomerServiceType[]
+    likes                Likes[]
+    moveRequests         MoveRequest[]
+    reviews              Review[]
+    notifications        Notification[]
+
+    @@index([region])
+    @@index([email])
+    @@index([deleted])
+    @@index([isActive])
+    @@index([lastLoginAt])
+}
+
+model Mover {
+    id                  Int                  @id @default(autoincrement())
+    email               String               @unique @db.VarChar(255)
+    password            String               @db.VarChar(255)
+    phone               String               @db.VarChar(20)
+    img                 String               @default("") @db.VarChar(500)
+    nickname            String               @db.VarChar(50)
+    career              String               @db.VarChar(100)
+    introduction        String               @db.VarChar(1000)
+    description         String               @db.VarChar(2000)
+    averageRating       Float                @default(0.0)
+    totalReviews        Int                  @default(0)
+    isActive            Boolean              @default(true)
+    deleted             Boolean              @default(false)
+    lastLoginAt         DateTime?
+    createdAt           DateTime             @default(now())
+    updatedAt           DateTime             @updatedAt
+    moverServiceTypes   MoverServiceType[]
+    moverRegions        MoverRegion[]
+    likes               Likes[]
+    directQuoteRequests DirectQuoteRequest[]
+    quotes              Quote[]
+    reviews             Review[]
+    notifications       Notification[]
+
+    @@index([email])
+    @@index([nickname])
+    @@index([averageRating])
+    @@index([isActive])
+    @@index([deleted])
+    @@index([lastLoginAt])
+}
+
+model CustomerServiceType {
+    id          Int         @id @default(autoincrement())
+    serviceType ServiceType
+    customer    Customer    @relation(fields: [customerId], references: [id])
+    customerId  Int
+
+    @@unique([customerId, serviceType])
+    @@index([customerId])
+    @@index([serviceType])
+}
+
+model MoverServiceType {
+    id          Int         @id @default(autoincrement())
+    serviceType ServiceType
+    mover       Mover       @relation(fields: [moverId], references: [id])
+    moverId     Int
+
+    @@unique([moverId, serviceType])
+    @@index([moverId])
+    @@index([serviceType])
+}
+
+model MoverRegion {
+    id      Int    @id @default(autoincrement())
+    region  Region
+    mover   Mover  @relation(fields: [moverId], references: [id])
+    moverId Int
+
+    @@unique([moverId, region])
+    @@index([moverId])
+    @@index([region])
+}
+
+model Likes {
+    id         Int      @id @default(autoincrement())
+    customer   Customer @relation(fields: [customerId], references: [id])
+    customerId Int
+    mover      Mover    @relation(fields: [moverId], references: [id])
+    moverId    Int
+    createdAt  DateTime @default(now())
+
+    @@unique([customerId, moverId]) // 제약조건 + 인덱스. 고객-기사 조합 하나에는 하나의 like만 존재 가능
+    @@index([customerId])
+    @@index([moverId])
+    @@index([createdAt])
+}
+
+model MoveRequest {
+    id                  Int                  @id @default(autoincrement())
+    serviceType         ServiceType
+    moveDate            DateTime
+    departure           String               @db.VarChar(200)
+    destination         String               @db.VarChar(200)
+    status              MoveRequestStatus    @default(ACTIVE)
+    customer            Customer             @relation(fields: [customerId], references: [id])
+    customerId          Int
+    createdAt           DateTime             @default(now())
+    updatedAt           DateTime             @updatedAt
+    directQuoteRequests DirectQuoteRequest[]
+    quotes              Quote[]
+    reviews             Review[]
+
+    @@index([customerId])
+    @@index([serviceType])
+    @@index([moveDate])
+    @@index([status])
+    @@index([customerId, serviceType])
+    @@index([serviceType, moveDate])
+    @@index([status, createdAt])
+    @@index([createdAt])
+}
+
+model DirectQuoteRequest {
+    id              Int                 @id @default(autoincrement())
+    moveRequest     MoveRequest         @relation(fields: [moveRequestId], references: [id])
+    moveRequestId   Int
+    mover           Mover               @relation(fields: [moverId], references: [id])
+    moverId         Int
+    status          DirectRequestStatus @default(pending)
+    createdAt       DateTime            @default(now())
+    updatedAt       DateTime            @updatedAt
+    rejectedRequest RejectedRequest?
+
+    @@unique([moveRequestId, moverId])
+    @@index([moveRequestId])
+    @@index([moverId])
+    @@index([status])
+    @@index([status, createdAt])
+    @@index([createdAt])
+}
+
+model RejectedRequest {
+    id                 Int                @id @default(autoincrement())
+    comment            String             @db.VarChar(1000)
+    directQuoteRequest DirectQuoteRequest @relation(fields: [directRequestId], references: [id])
+    directRequestId    Int                @unique
+    createdAt          DateTime           @default(now())
+}
+
+model Quote {
+    id            Int         @id @default(autoincrement())
+    price         Int
+    comment       String      @db.VarChar(1000)
+    moveRequest   MoveRequest @relation(fields: [moveRequestId], references: [id])
+    moveRequestId Int
+    mover         Mover       @relation(fields: [moverId], references: [id])
+    moverId       Int
+    status        QuoteStatus @default(pending)
+    type          QuoteType   @default(normal)
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+
+    @@unique([moveRequestId, moverId, type])
+    @@index([moveRequestId])
+    @@index([moverId])
+    @@index([status])
+    @@index([type])
+    @@index([moveRequestId, status])
+    @@index([status, createdAt])
+    @@index([createdAt])
+}
+
+model Review {
+    id            Int         @id @default(autoincrement())
+    content       String      @db.VarChar(2000)
+    rating        Int         @db.SmallInt
+    customer      Customer    @relation(fields: [customerId], references: [id])
+    customerId    Int
+    mover         Mover       @relation(fields: [moverId], references: [id])
+    moverId       Int
+    moveRequest   MoveRequest @relation(fields: [moveRequestId], references: [id])
+    moveRequestId Int
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+
+    @@unique([customerId, moveRequestId, moverId])
+    @@index([customerId])
+    @@index([moverId])
+    @@index([rating])
+    @@index([moverId, rating])
+    @@index([createdAt])
+}
+
+model Notification {
+    id        Int                  @id @default(autoincrement())
+    user      Customer?            @relation(fields: [userId], references: [id])
+    mover     Mover?               @relation(fields: [moverId], references: [id])
+    userId    Int?
+    moverId   Int?
+    content   String               @db.VarChar(500)
+    type      NotificationType
+    priority  NotificationPriority @default(MEDIUM)
+    isRead    Boolean              @default(false)
+    readAt    DateTime?
+    link      String?              @db.VarChar(500)
+    expiresAt DateTime?
+    createdAt DateTime             @default(now())
+
+    @@index([userId])
+    @@index([moverId])
+    @@index([type])
+    @@index([priority])
+    @@index([isRead])
+    @@index([userId, isRead])
+    @@index([userId, type])
+    @@index([moverId, type])
+    @@index([expiresAt])
+    @@index([createdAt])
 }
