@@ -8,9 +8,9 @@ datasource db {
 }
 
 enum ServiceType {
-    small
-    family
-    office
+    SMALL
+    FAMILY
+    OFFICE
 }
 
 enum Region {
@@ -34,22 +34,22 @@ enum Region {
 }
 
 enum DirectRequestStatus {
-    pending // 대기 중
-    accepted // 수락됨
-    rejected // 거절됨
-    expired // 기사가 지정 요청에 응답하지 않고 기한이 종료됨
+    PENDING // 대기 중
+    ACCEPTED // 수락됨
+    REJECTED // 거절됨
+    EXPIRED // 기사가 지정 요청에 응답하지 않고 기한이 종료됨
 }
 
 enum QuoteStatus {
-    pending // 대기 중
-    accepted // 수락됨
-    rejected // 거절됨  
-    expired // 고객이 아무 견적도 선택하지 않고 기한이 종료됨
+    PENDING // 대기 중
+    ACCEPTED // 수락됨
+    REJECTED // 거절됨  
+    EXPIRED // 고객이 아무 견적도 선택하지 않고 기한이 종료됨
 }
 
 enum QuoteType {
-    normal
-    direct
+    NORMAL
+    DIRECT
 }
 
 enum NotificationType {
@@ -224,7 +224,7 @@ model DirectQuoteRequest {
     moveRequestId   Int
     mover           Mover               @relation(fields: [moverId], references: [id])
     moverId         Int
-    status          DirectRequestStatus @default(pending)
+    status          DirectRequestStatus @default(PENDING)
     createdAt       DateTime            @default(now())
     updatedAt       DateTime            @updatedAt
     rejectedRequest RejectedRequest?
@@ -253,8 +253,8 @@ model Quote {
     moveRequestId Int
     mover         Mover       @relation(fields: [moverId], references: [id])
     moverId       Int
-    status        QuoteStatus @default(pending)
-    type          QuoteType   @default(normal)
+    status        QuoteStatus @default(PENDING)
+    type          QuoteType   @default(NORMAL)
     createdAt     DateTime    @default(now())
     updatedAt     DateTime    @updatedAt
 
