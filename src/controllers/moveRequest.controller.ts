@@ -13,7 +13,7 @@ export const createMoveRequestController = async (
     //@any
     // const customerId = (req as any).user?.id; // 로그인 미들웨어에서 넘어왔다고 가정
 
-    const customerId = 2; //@우진수정 나중에 auth붙으면 하드코딩 삭제 예정
+    const customerId = 3; //@우진수정 나중에 auth붙으면 하드코딩 삭제 예정
     if (!customerId) {
       return res.status(401).json({ message: "로그인이 필요합니다" });
     }
