@@ -19,6 +19,8 @@ interface GetMoveRequestsListParams {
   limit: number;
   page: number;
   serviceType?: ServiceType;
+  departureRegion?: string;
+  destinationRegion?: string;
   orderBy?: "recent" | "deadline";
 }
 
@@ -26,11 +28,15 @@ export const getMoveRequestsList = async ({
   limit = 5,
   page = 1,
   serviceType,
+  departureRegion,
+  destinationRegion,
   orderBy = "recent",
 }: GetMoveRequestsListParams) => {
   const whereConditions: Prisma.MoveRequestWhereInput = {
     status: MoveRequestStatus.ACTIVE,
     ...(serviceType && { serviceType }),
+    ...(departureRegion && { departureRegion }),
+    ...(destinationRegion && { destinationRegion }),
   };
 
   const orderByConditions: Prisma.MoveRequestOrderByWithRelationInput =
