@@ -198,7 +198,9 @@ model MoveRequest {
     serviceType         ServiceType
     moveDate            DateTime
     departure           String               @db.VarChar(200)
+    departureRegion     String
     destination         String               @db.VarChar(200)
+    destinationRegion   String
     status              MoveRequestStatus    @default(ACTIVE)
     customer            Customer             @relation(fields: [customerId], references: [id])
     customerId          Int
