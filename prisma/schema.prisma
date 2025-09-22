@@ -105,7 +105,7 @@ model Customer {
     moveRequests         MoveRequest[]
     reviews              Review[]
     notifications        Notification[]
-    refreshTokens        RefreshToken[]        @relation("CustomerRefreshTokens")
+    refreshToken         RefreshToken[]        @relation("CustomerRefreshToken")
 
     @@index([region])
     @@index([email])
@@ -138,7 +138,7 @@ model Mover {
     quotes              Quote[]
     reviews             Review[]
     notifications       Notification[]
-    refreshTokens       RefreshToken[]       @relation("MoverRefreshTokens")
+    refreshToken        RefreshToken[]       @relation("MoverRefreshToken")
 
     @@index([email])
     @@index([nickname])
@@ -163,10 +163,10 @@ model RefreshToken {
     updatedAt  DateTime  @updatedAt
 
     // Customer와의 관계 (userType이 CUSTOMER일 때만)
-    customer Customer? @relation("CustomerRefreshTokens", fields: [userId], references: [id], onDelete: Cascade, map: "RefreshToken_customerId_fkey")
+    customer Customer? @relation("CustomerRefreshToken", fields: [userId], references: [id], onDelete: Cascade, map: "RefreshToken_customerId_fkey")
 
     // Mover와의 관계 (userType이 MOVER일 때만)
-    mover Mover? @relation("MoverRefreshTokens", fields: [userId], references: [id], onDelete: Cascade, map: "RefreshToken_moverId_fkey")
+    mover Mover? @relation("MoverRefreshToken", fields: [userId], references: [id], onDelete: Cascade, map: "RefreshToken_moverId_fkey")
 
     @@index([userId, userType])
     @@index([expiresAt])
