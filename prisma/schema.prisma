@@ -105,6 +105,7 @@ model Customer {
     moveRequests         MoveRequest[]
     reviews              Review[]
     notifications        Notification[]
+    refreshTokens        RefreshToken[]        @relation("CustomerRefreshTokens")
 
     @@index([region])
     @@index([email])
@@ -137,6 +138,7 @@ model Mover {
     quotes              Quote[]
     reviews             Review[]
     notifications       Notification[]
+    refreshTokens       RefreshToken[]       @relation("MoverRefreshTokens")
 
     @@index([email])
     @@index([nickname])
@@ -144,6 +146,31 @@ model Mover {
     @@index([isActive])
     @@index([deleted])
     @@index([lastLoginAt])
+}
+
+model RefreshToken {
+    id       Int      @id @default(autoincrement())
+    userId   Int
+    userType UserType // CUSTOMER 또는 MOVER
+    opaqueId String?  @unique
+
+    userAgent  String?   @db.VarChar(500)
+    ip         String?   @db.VarChar(45)
+    revoked    Boolean   @default(false)
+    expiresAt  DateTime
+    lastUsedAt DateTime?
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+
+    // Customer와의 관계 (userType이 CUSTOMER일 때만)
+    customer Customer? @relation("CustomerRefreshTokens", fields: [userId], references: [id], onDelete: Cascade, map: "RefreshToken_customerId_fkey")
+
+    // Mover와의 관계 (userType이 MOVER일 때만)
+    mover Mover? @relation("MoverRefreshTokens", fields: [userId], references: [id], onDelete: Cascade, map: "RefreshToken_moverId_fkey")
+
+    @@index([userId, userType])
+    @@index([expiresAt])
+    @@index([revoked])
 }
 
 model CustomerServiceType {
