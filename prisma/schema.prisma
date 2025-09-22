@@ -120,7 +120,7 @@ model Mover {
     password            String               @db.VarChar(255)
     phone               String               @db.VarChar(20)
     img                 String               @default("") @db.VarChar(500)
-    nickname            String               @db.VarChar(50)
+    nickname            String               @unique @db.VarChar(50)
     career              String               @db.VarChar(100)
     introduction        String               @db.VarChar(1000)
     description         String               @db.VarChar(2000)
@@ -152,8 +152,9 @@ model RefreshToken {
     id       Int      @id @default(autoincrement())
     userId   Int
     userType UserType // CUSTOMER 또는 MOVER
-    opaqueId String?  @unique
+    hashed   String?
 
+    opaqueId String?  @unique
     userAgent  String?   @db.VarChar(500)
     ip         String?   @db.VarChar(45)
     revoked    Boolean   @default(false)

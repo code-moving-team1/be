@@ -1,10 +1,11 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken"
 import * as moverRepo from "../repositories/mover.repository";
 import * as customerRepo from "../repositories/customer.repository";
+import * as refreshRepo from "../repositories/refresh.repository";
 import type { Mover } from "@prisma/client";
-import type { SafeUser } from "../types/domain.js";
-import HttpError from "../utiles/HttpError.js";
+import type { SafeMover, SafeCustomer } from "../types/domain";
+import HttpError from "../utils/HttpError";
 
 type SignUpDto = {
   email: string;
@@ -53,7 +54,7 @@ function generateRefreshToken(
   });
 }
 
-function toSafeUser(mover: Mover): SafeUser {
+function toSafeMover(mover: Mover) {
   return {
     id: mover.id,
     email: mover.email,
@@ -66,7 +67,7 @@ function toSafeUser(mover: Mover): SafeUser {
     averageRating: mover.averageRating,
     totalReviews: mover.totalReviews,
     createdAt: mover.createdAt,
-  };
+  } as SafeMover;
 }
 
 export async function signup({
@@ -78,7 +79,7 @@ export async function signup({
   introduction,
   description,
   img,
-}: SignUpDto): Promise<SafeUser> {
+}: SignUpDto): Promise<SafeMover> {
   if (
     !email ||
     !password ||
@@ -91,18 +92,17 @@ export async function signup({
     throw new HttpError(400, "필수 항목 누락!", "validation");
   }
 
-  // Customer와 Mover 모두에서 이메일 중복 확인
-  const existingCustomer = await customerRepo.findByEmail(email);
+  // 이메일 중복 확인
+  // 하나의 이메일로 customer와 mover 모두 가입이 가능한 상황 (지금은)
   const existingMover = await moverRepo.findByEmail(email);
-
-  if (existingCustomer || existingMover) {
+  if (existingMover) {
     throw new HttpError(409, "이미 등록된 이메일입니다.", "email");
   }
 
   // 닉네임 중복 확인
   const existingNickname = await moverRepo.findByNickname(nickname);
   if (existingNickname) {
-    throw new HttpError(409, "이미 사용 중인 닉네임입니다.", "nickname");
+    throw new HttpError(409, "이미 사용 중인 닉네임입니다.");
   }
 
   const hashed = await bcrypt.hash(password, SALT_ROUNDS);
@@ -115,73 +115,41 @@ export async function signup({
     introduction,
     description,
     img,
-  });
-
-  return toSafeUser(mover);
+  } as SignUpDto);
+  
+  return toSafeMover(mover);
 }
 
 export async function signin({
   email,
   password,
-  userType,
 }: SignInDto): Promise<Tokens> {
-  let user: Mover | null = null;
+    const mover = await moverRepo.findByEmail(email);
 
-  if (userType === "MOVER") {
-    user = await moverRepo.findByEmail(email);
-  } else {
-    // CUSTOMER 타입인 경우 Customer 테이블에서 찾기
-    const customer = await customerRepo.findByEmail(email);
-    if (customer) {
-      // Mover 타입으로 변환 (공통 인터페이스 사용)
-      user = {
-        id: customer.id,
-        email: customer.email,
-        password: customer.password,
-        phone: customer.phone,
-        img: customer.img,
-        nickname: "", // Customer는 nickname이 없으므로 기본값
-        career: "",
-        introduction: "",
-        description: "",
-        averageRating: 0,
-        totalReviews: 0,
-        isActive: customer.isActive,
-        deleted: customer.deleted,
-        lastLoginAt: customer.lastLoginAt,
-        createdAt: customer.createdAt,
-        updatedAt: customer.updatedAt,
-      } as Mover;
-    }
-  }
-
-  if (!user || !user.password) {
+  if (!mover || !mover.password) {
     throw new HttpError(401, "존재하지 않는 이메일입니다.", "email");
   }
 
-  const valid = await bcrypt.compare(password, user.password);
+  const valid = await bcrypt.compare(password, mover.password);
   if (!valid) {
     throw new HttpError(401, "잘못된 비밀번호 입니다.", "password");
   }
 
-  const accessToken = generateAccessToken(user, userType);
-  const refreshToken = generateRefreshToken(user, userType);
+  const accessToken = generateAccessToken(mover, "MOVER");
+  const refreshToken = generateRefreshToken(mover, "MOVER");
 
   // RefreshToken을 별도 테이블에 저장
-  // TODO: RefreshToken 저장 로직 구현 필요
+  // expiresAt: 7일 후로 임의로 지정했습니다
+  await refreshRepo.createRefreshToken(mover.id, "MOVER", new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), refreshToken);
 
   // 마지막 로그인 시간 업데이트
-  if (userType === "MOVER") {
-    await moverRepo.updateLastLoginAt(user.id);
-  } else {
-    await customerRepo.updateLastLoginAt(user.id);
-  }
+  await moverRepo.updateLastLoginAt(mover.id);
 
   return {
     accessToken,
     refreshToken,
-    userType,
-    userId: user.id,
+    userType: "MOVER",
+    userId: mover.id,
   };
 }
 
@@ -197,7 +165,11 @@ export async function refresh(refreshToken: string): Promise<{
     };
 
     // RefreshToken 테이블에서 검증
-    // TODO: RefreshToken 검증 로직 구현 필요
+    const refreshTokenRecord = await refreshRepo.findByUserIdAndUserType(decoded.id, decoded.userType);
+    
+    if (!refreshTokenRecord) {
+      throw new HttpError(401, "유효하지 않은 리프레시 토큰입니다.", "auth");
+    }
 
     const newAccessToken = generateAccessToken(
       { id: decoded.id },
@@ -218,13 +190,13 @@ export async function logout(
   userType: "CUSTOMER" | "MOVER"
 ): Promise<void> {
   // RefreshToken 테이블에서 해당 사용자의 토큰들 무효화
-  // TODO: RefreshToken 무효화 로직 구현 필요
+  await refreshRepo.revokeAllByUser(userId, userType);
 }
 
 export function getMe(
   id: number,
   userType: "CUSTOMER" | "MOVER"
-): Promise<SafeUser | null> {
+): Promise<SafeMover | SafeCustomer | null> {
   if (userType === "MOVER") {
     return moverRepo.findSafeById(id);
   } else {
@@ -242,28 +214,28 @@ export async function updateProfile(
     description?: string;
     img?: string;
   }
-): Promise<SafeUser> {
+): Promise<SafeMover> {
   const mover = await moverRepo.update(id, data);
-  return toSafeUser(mover);
+  return toSafeMover(mover);
 }
 
-export async function getMoversByRegion(region: string): Promise<SafeUser[]> {
+export async function getMoversByRegion(region: string): Promise<SafeMover[]> {
   const movers = await moverRepo.findByRegion(region);
-  return movers.map(toSafeUser);
+  return movers.map(toSafeMover);
 }
 
 export async function getMoversByServiceType(
   serviceType: string
-): Promise<SafeUser[]> {
+): Promise<SafeMover[]> {
   const movers = await moverRepo.findByServiceType(serviceType);
-  return movers.map(toSafeUser);
+  return movers.map(toSafeMover);
 }
 
 export async function getTopRatedMovers(
   minRating: number = 4.0
-): Promise<SafeUser[]> {
+): Promise<SafeMover[]> {
   const movers = await moverRepo.findByRating(minRating);
-  return movers.map(toSafeUser);
+  return movers.map(toSafeMover);
 }
 
 export default {

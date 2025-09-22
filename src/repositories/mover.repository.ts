@@ -13,6 +13,10 @@ export async function findByEmail(email: string) {
   return prisma.mover.findUnique({ where: { email } });
 }
 
+export async function findByNickname(nickname: string) {
+  return prisma.mover.findFirst({ where: { nickname } });
+}
+
 export async function findSafeById(id: number) {
   return prisma.mover.findUnique({
     where: { id: Number(id) },
@@ -57,6 +61,7 @@ export async function create(mover: {
     },
   });
 }
+
 
 export async function update(id: number, data: Prisma.MoverUpdateInput) {
   return prisma.mover.update({
@@ -129,6 +134,7 @@ export async function findByRating(minRating: number) {
 export default {
   findById,
   findByEmail,
+  findByNickname,
   findSafeById,
   create,
   update,
