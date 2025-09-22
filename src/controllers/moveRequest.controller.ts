@@ -18,7 +18,7 @@ export const createMoveRequestController = async (
       return res.status(401).json({ message: "로그인이 필요합니다" });
     }
 
-    //zod
+    //zod 검사
     const parseResult = createMoveRequestSchema.safeParse(req.body);
     if (!parseResult.success) {
       return res.status(400).json({ errors: parseResult.error.format() });

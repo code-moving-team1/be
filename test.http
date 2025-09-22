@@ -3,10 +3,12 @@ POST http://localhost:4000/api/move-requests
 Content-Type: application/json
 
 {
-  "serviceType": "small",
-  "moveDate": "2025-12-01",
-  "departure": "서울 강남구 역삼동",
-  "destination": "경기도 수원시 팔달구"
+  "serviceType": "FAMILY",
+  "moveDate": "2025-12-25",
+  "departure": "서울 성북구 장위동",
+  "departureRegion": "서울",
+  "destination": "제주도 서귀포시 토평동",
+  "destinationRegion": "제주"
 }
 
 
