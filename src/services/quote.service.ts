@@ -61,11 +61,11 @@ export const submitQuote = async (
           ...(process.env.NODE_ENV === "development"
             ? {
                 details: {
-                  code: error.code,
-                  meta: error.meta,
-                  moverId,
-                  moveRequestId,
-                  type,
+                  code: error.code, //"P2002" 같은 Prisma 에러 코드
+                  meta: error.meta, // Prisma가 제공하는 추가 정보
+                  moverId, // 누가(기사) 시도했는지
+                  moveRequestId, // 어느 요청에 대해
+                  type, // 어떤 견적 유형(normal/direct)
                 },
               }
             : {}),
