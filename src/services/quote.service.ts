@@ -1,8 +1,10 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, QuoteType } from "@prisma/client";
 import { createQuote } from "../repositories/quote.repository";
 import { SubmitQuoteBody } from "../schemas/quote.schema";
-import { QuoteType } from "@prisma/client";
-import HttpError from "../utils/HttpError";
+import { createError } from "../utils/HttpError";
+
+const isQuoteType = (v: unknown): v is QuoteType =>
+  v === "normal" || v === "direct";
 
 export const submitQuote = async (
   moverId: number,
@@ -11,12 +13,18 @@ export const submitQuote = async (
 ) => {
   const mover = await getTestCodeMoverById(moverId);
   if (!mover) {
-    throw new HttpError(403, "잘못된 기사 계정입니다.", "auth");
+    throw createError("AUTH/UNAUTHORIZED", {
+      messageOverride: "잘못된 기사 계정입니다.", // 기본 카탈로그 메시지 대신 적용
+      details: { moverId }, // context 정보는 details에 담음 → 에러 응답 body에도 포함됨
+    });
   }
 
   const moveRequest = await getTestCodeMoveRequestById(moveRequestId);
   if (!moveRequest) {
-    throw new HttpError(404, "해당 이사 요청을 찾을 수 없습니다.", "notfound");
+    throw createError("REQUEST/NOT_FOUND", {
+      messageOverride: "해당 이사 요청을 찾을 수 없습니다.",
+      details: { moveRequestId },
+    });
   }
 
   const type = (payload.type ?? "normal") as QuoteType;
@@ -27,14 +35,14 @@ export const submitQuote = async (
       moverId
     );
     if (!directQuote) {
-      throw new HttpError(
-        403,
-        "직접 견적 요청이 없거나 유효하지 않습니다.",
-        "notfound"
-      );
+      throw createError("REQUEST/VALIDATION", {
+        messageOverride: "직접 견적 요청이 없거나 유효하지 않습니다.",
+        details: { moveRequestId, moverId, type },
+      });
     }
   }
 
+  // 생성 + 에러 매핑
   try {
     const created = await createQuote({
       price: payload.price,
@@ -44,16 +52,43 @@ export const submitQuote = async (
       type,
     });
     return created;
-  } catch (error: any) {
+  } catch (error) {
+    // Prisma에서 발생한 에러 처리
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
-        throw new HttpError(
-          409,
-          "이미 동일 유형의 견적을 제출했습니다.",
-          "validation"
-        );
+        // 고유 제약(중복 제출)
+        throw createError("QUOTE/DUPLICATE", {
+          ...(process.env.NODE_ENV === "development"
+            ? {
+                details: {
+                  code: error.code,
+                  meta: error.meta,
+                  moverId,
+                  moveRequestId,
+                  type,
+                },
+              }
+            : {}),
+          cause: error,
+        });
       }
+      // 그 외 Prisma known error
+      throw createError("SERVER/INTERNAL", {
+        messageOverride: "데이터베이스 처리 중 오류가 발생했습니다.",
+        ...(process.env.NODE_ENV === "development"
+          ? { details: { code: error.code, meta: error.meta } }
+          : {}),
+        cause: error,
+      });
     }
-    throw new HttpError(500, "견적 제출 중 오류가 발생했습니다.");
+
+    // 알 수 없는 에러
+    throw createError("SERVER/INTERNAL", {
+      messageOverride: "견적 제출 중 오류가 발생했습니다.",
+      ...(process.env.NODE_ENV === "development"
+        ? { details: { moverId, moveRequestId, type } }
+        : {}),
+      cause: error,
+    });
   }
 };
