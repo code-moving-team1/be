@@ -1,7 +1,13 @@
 // src/controllers/moveRequest.controller.ts
 import { Request, Response } from "express";
-import { createMoveRequestSchema } from "../schemas/moveRequest.schema";
-import { handleCreateMoveRequest } from "../services/moveRequest.service";
+import {
+  createMoveRequestSchema,
+  searchMoveRequestsSchema,
+} from "../schemas/moveRequest.schema";
+import {
+  handleCreateMoveRequest,
+  handleSearchMoveRequests,
+} from "../services/moveRequest.service";
 
 //추후 에러타입 정의 및 에러 규격화 하겠습니다
 
@@ -34,5 +40,25 @@ export const createMoveRequestController = async (
     return res.status(500).json({
       message: error.message || "서버 오류로 인해 이사요청 생성 실패",
     });
+  }
+};
+
+export const searchMoveRequestsController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const parseResult = searchMoveRequestsSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ errors: parseResult.error.format() }); //@TODO 에러타입
+    }
+    const { meta, data } = await handleSearchMoveRequests(parseResult.data);
+
+    return res.status(200).json({ meta, data });
+  } catch (error: any) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: error.message || "검색하여 GET 실패" });
   }
 };

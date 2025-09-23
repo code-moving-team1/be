@@ -3,11 +3,11 @@ POST http://localhost:4000/api/move-requests
 Content-Type: application/json
 
 {
-  "serviceType": "FAMILY",
+  "serviceType": "SMALL",
   "moveDate": "2025-12-25",
-  "departure": "서울 성북구 장위동",
-  "departureRegion": "서울",
-  "destination": "제주도 서귀포시 토평동",
+  "departure": "경기도 남양주시 화도읍",
+  "departureRegion": "경기",
+  "destination": "제주 서귀포시 동홍동",
   "destinationRegion": "제주"
 }
 
@@ -33,4 +33,13 @@ Content-Type: application/json
 {
   "email": "test@test.com",
   "password": "12345678"
+}
+
+### Mover가 조건에 맞는 이사요청 list 불러오기
+POST http://localhost:4000/api/move-requests/search
+Content-Type: application/json
+
+{
+  # "regions": ["경기"]
+  # "serviceTypes": ["SMALL"]
 }
