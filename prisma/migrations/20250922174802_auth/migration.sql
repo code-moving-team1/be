@@ -1,55 +1,88 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `nickname` on the `Customer` table. All the data in the column will be lost.
-  - Added the required column `password` to the `Customer` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `phone` to the `Customer` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `region` to the `Customer` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `updatedAt` to the `Customer` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- CreateEnum
-CREATE TYPE "public"."ServiceType" AS ENUM ('small', 'family', 'office');
+CREATE TYPE "public"."ServiceType" AS ENUM ('SMALL', 'FAMILY', 'OFFICE');
 
 -- CreateEnum
 CREATE TYPE "public"."Region" AS ENUM ('서울', '경기', '인천', '강원', '충북', '충남', '세종', '대전', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주');
 
 -- CreateEnum
-CREATE TYPE "public"."DirectRequestStatus" AS ENUM ('pending', 'accepted', 'rejected', 'expired');
+CREATE TYPE "public"."DirectRequestStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED');
 
 -- CreateEnum
-CREATE TYPE "public"."QuoteStatus" AS ENUM ('pending', 'accepted', 'rejected');
+CREATE TYPE "public"."QuoteStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED');
 
 -- CreateEnum
-CREATE TYPE "public"."QuoteType" AS ENUM ('normal', 'direct');
+CREATE TYPE "public"."QuoteType" AS ENUM ('NORMAL', 'DIRECT');
 
 -- CreateEnum
-CREATE TYPE "public"."NotificationType" AS ENUM ('NEW_QUOTE_RECEIVED', 'MOVE_REQUEST_DECIDED', 'D_DAY_ALARM', 'DIRECT_QUOTE_REQ_DENIED', 'ETC');
+CREATE TYPE "public"."NotificationType" AS ENUM ('NEW_QUOTE_RECEIVED', 'MOVE_REQUEST_DECIDED', 'D_DAY_ALARM', 'DIRECT_QUOTE_REQ_DENIED', 'QUOTE_ACCEPTED', 'QUOTE_REJECTED', 'REVIEW_RECEIVED', 'ETC');
 
--- AlterTable
-ALTER TABLE "public"."Customer" DROP COLUMN "nickname",
-ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "img" TEXT NOT NULL DEFAULT '',
-ADD COLUMN     "password" TEXT NOT NULL,
-ADD COLUMN     "phone" TEXT NOT NULL,
-ADD COLUMN     "region" "public"."Region" NOT NULL,
-ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL;
+-- CreateEnum
+CREATE TYPE "public"."UserType" AS ENUM ('CUSTOMER', 'MOVER');
+
+-- CreateEnum
+CREATE TYPE "public"."NotificationPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
+
+-- CreateEnum
+CREATE TYPE "public"."MoveRequestStatus" AS ENUM ('ACTIVE', 'COMPLETED', 'FINISHED');
+
+-- CreateEnum
+CREATE TYPE "public"."UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED', 'DELETED');
+
+-- CreateTable
+CREATE TABLE "public"."Customer" (
+    "id" SERIAL NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "password" VARCHAR(255) NOT NULL,
+    "phone" VARCHAR(20) NOT NULL,
+    "img" VARCHAR(500) NOT NULL DEFAULT '',
+    "region" "public"."Region" NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "deleted" BOOLEAN NOT NULL DEFAULT false,
+    "lastLoginAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Customer_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "public"."Mover" (
     "id" SERIAL NOT NULL,
-    "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
-    "phone" TEXT NOT NULL,
-    "img" TEXT NOT NULL DEFAULT '',
-    "nickname" TEXT NOT NULL,
-    "career" TEXT NOT NULL,
-    "introduction" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "password" VARCHAR(255) NOT NULL,
+    "phone" VARCHAR(20) NOT NULL,
+    "img" VARCHAR(500) NOT NULL DEFAULT '',
+    "nickname" VARCHAR(50) NOT NULL,
+    "career" VARCHAR(100) NOT NULL,
+    "introduction" VARCHAR(1000) NOT NULL,
+    "description" VARCHAR(2000) NOT NULL,
+    "averageRating" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    "totalReviews" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "deleted" BOOLEAN NOT NULL DEFAULT false,
+    "lastLoginAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Mover_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."RefreshToken" (
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "userType" "public"."UserType" NOT NULL,
+    "hashed" TEXT,
+    "opaqueId" TEXT,
+    "userAgent" VARCHAR(500),
+    "ip" VARCHAR(45),
+    "revoked" BOOLEAN NOT NULL DEFAULT false,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "lastUsedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "RefreshToken_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -94,9 +127,11 @@ CREATE TABLE "public"."MoveRequest" (
     "id" SERIAL NOT NULL,
     "serviceType" "public"."ServiceType" NOT NULL,
     "moveDate" TIMESTAMP(3) NOT NULL,
-    "departure" TEXT NOT NULL,
-    "destination" TEXT NOT NULL,
-    "isFinished" BOOLEAN NOT NULL DEFAULT false,
+    "departure" VARCHAR(200) NOT NULL,
+    "departureRegion" TEXT NOT NULL,
+    "destination" VARCHAR(200) NOT NULL,
+    "destinationRegion" TEXT NOT NULL,
+    "status" "public"."MoveRequestStatus" NOT NULL DEFAULT 'ACTIVE',
     "customerId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -109,7 +144,7 @@ CREATE TABLE "public"."DirectQuoteRequest" (
     "id" SERIAL NOT NULL,
     "moveRequestId" INTEGER NOT NULL,
     "moverId" INTEGER NOT NULL,
-    "status" "public"."DirectRequestStatus" NOT NULL DEFAULT 'pending',
+    "status" "public"."DirectRequestStatus" NOT NULL DEFAULT 'PENDING',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -119,7 +154,7 @@ CREATE TABLE "public"."DirectQuoteRequest" (
 -- CreateTable
 CREATE TABLE "public"."RejectedRequest" (
     "id" SERIAL NOT NULL,
-    "comment" TEXT NOT NULL,
+    "comment" VARCHAR(1000) NOT NULL,
     "directRequestId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -130,11 +165,11 @@ CREATE TABLE "public"."RejectedRequest" (
 CREATE TABLE "public"."Quote" (
     "id" SERIAL NOT NULL,
     "price" INTEGER NOT NULL,
-    "comment" TEXT NOT NULL,
+    "comment" VARCHAR(1000) NOT NULL,
     "moveRequestId" INTEGER NOT NULL,
     "moverId" INTEGER NOT NULL,
-    "status" "public"."QuoteStatus" NOT NULL DEFAULT 'pending',
-    "type" "public"."QuoteType" NOT NULL DEFAULT 'normal',
+    "status" "public"."QuoteStatus" NOT NULL DEFAULT 'PENDING',
+    "type" "public"."QuoteType" NOT NULL DEFAULT 'NORMAL',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -144,10 +179,11 @@ CREATE TABLE "public"."Quote" (
 -- CreateTable
 CREATE TABLE "public"."Review" (
     "id" SERIAL NOT NULL,
-    "content" TEXT NOT NULL,
-    "rating" INTEGER NOT NULL,
+    "content" VARCHAR(2000) NOT NULL,
+    "rating" SMALLINT NOT NULL,
     "customerId" INTEGER NOT NULL,
     "moverId" INTEGER NOT NULL,
+    "moveRequestId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -157,18 +193,43 @@ CREATE TABLE "public"."Review" (
 -- CreateTable
 CREATE TABLE "public"."Notification" (
     "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
-    "content" TEXT NOT NULL,
+    "userId" INTEGER,
+    "moverId" INTEGER,
+    "content" VARCHAR(500) NOT NULL,
     "type" "public"."NotificationType" NOT NULL,
+    "priority" "public"."NotificationPriority" NOT NULL DEFAULT 'MEDIUM',
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "readAt" TIMESTAMP(3),
+    "link" VARCHAR(500),
+    "expiresAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "read" BOOLEAN NOT NULL DEFAULT false,
-    "link" TEXT,
 
     CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Customer_email_key" ON "public"."Customer"("email");
+
+-- CreateIndex
+CREATE INDEX "Customer_region_idx" ON "public"."Customer"("region");
+
+-- CreateIndex
+CREATE INDEX "Customer_email_idx" ON "public"."Customer"("email");
+
+-- CreateIndex
+CREATE INDEX "Customer_deleted_idx" ON "public"."Customer"("deleted");
+
+-- CreateIndex
+CREATE INDEX "Customer_isActive_idx" ON "public"."Customer"("isActive");
+
+-- CreateIndex
+CREATE INDEX "Customer_lastLoginAt_idx" ON "public"."Customer"("lastLoginAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Mover_email_key" ON "public"."Mover"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Mover_nickname_key" ON "public"."Mover"("nickname");
 
 -- CreateIndex
 CREATE INDEX "Mover_email_idx" ON "public"."Mover"("email");
@@ -177,28 +238,55 @@ CREATE INDEX "Mover_email_idx" ON "public"."Mover"("email");
 CREATE INDEX "Mover_nickname_idx" ON "public"."Mover"("nickname");
 
 -- CreateIndex
-CREATE INDEX "Mover_createdAt_idx" ON "public"."Mover"("createdAt");
+CREATE INDEX "Mover_averageRating_idx" ON "public"."Mover"("averageRating");
 
 -- CreateIndex
-CREATE INDEX "Mover_career_idx" ON "public"."Mover"("career");
+CREATE INDEX "Mover_isActive_idx" ON "public"."Mover"("isActive");
 
 -- CreateIndex
-CREATE INDEX "CustomerServiceType_customerId_serviceType_idx" ON "public"."CustomerServiceType"("customerId", "serviceType");
+CREATE INDEX "Mover_deleted_idx" ON "public"."Mover"("deleted");
+
+-- CreateIndex
+CREATE INDEX "Mover_lastLoginAt_idx" ON "public"."Mover"("lastLoginAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RefreshToken_opaqueId_key" ON "public"."RefreshToken"("opaqueId");
+
+-- CreateIndex
+CREATE INDEX "RefreshToken_userId_userType_idx" ON "public"."RefreshToken"("userId", "userType");
+
+-- CreateIndex
+CREATE INDEX "RefreshToken_expiresAt_idx" ON "public"."RefreshToken"("expiresAt");
+
+-- CreateIndex
+CREATE INDEX "RefreshToken_revoked_idx" ON "public"."RefreshToken"("revoked");
+
+-- CreateIndex
+CREATE INDEX "CustomerServiceType_customerId_idx" ON "public"."CustomerServiceType"("customerId");
 
 -- CreateIndex
 CREATE INDEX "CustomerServiceType_serviceType_idx" ON "public"."CustomerServiceType"("serviceType");
 
 -- CreateIndex
-CREATE INDEX "MoverServiceType_moverId_serviceType_idx" ON "public"."MoverServiceType"("moverId", "serviceType");
+CREATE UNIQUE INDEX "CustomerServiceType_customerId_serviceType_key" ON "public"."CustomerServiceType"("customerId", "serviceType");
+
+-- CreateIndex
+CREATE INDEX "MoverServiceType_moverId_idx" ON "public"."MoverServiceType"("moverId");
 
 -- CreateIndex
 CREATE INDEX "MoverServiceType_serviceType_idx" ON "public"."MoverServiceType"("serviceType");
 
 -- CreateIndex
-CREATE INDEX "MoverRegion_moverId_region_idx" ON "public"."MoverRegion"("moverId", "region");
+CREATE UNIQUE INDEX "MoverServiceType_moverId_serviceType_key" ON "public"."MoverServiceType"("moverId", "serviceType");
+
+-- CreateIndex
+CREATE INDEX "MoverRegion_moverId_idx" ON "public"."MoverRegion"("moverId");
 
 -- CreateIndex
 CREATE INDEX "MoverRegion_region_idx" ON "public"."MoverRegion"("region");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "MoverRegion_moverId_region_key" ON "public"."MoverRegion"("moverId", "region");
 
 -- CreateIndex
 CREATE INDEX "Likes_customerId_idx" ON "public"."Likes"("customerId");
@@ -207,10 +295,10 @@ CREATE INDEX "Likes_customerId_idx" ON "public"."Likes"("customerId");
 CREATE INDEX "Likes_moverId_idx" ON "public"."Likes"("moverId");
 
 -- CreateIndex
-CREATE INDEX "Likes_customerId_moverId_idx" ON "public"."Likes"("customerId", "moverId");
+CREATE INDEX "Likes_createdAt_idx" ON "public"."Likes"("createdAt");
 
 -- CreateIndex
-CREATE INDEX "Likes_createdAt_idx" ON "public"."Likes"("createdAt");
+CREATE UNIQUE INDEX "Likes_customerId_moverId_key" ON "public"."Likes"("customerId", "moverId");
 
 -- CreateIndex
 CREATE INDEX "MoveRequest_customerId_idx" ON "public"."MoveRequest"("customerId");
@@ -222,13 +310,16 @@ CREATE INDEX "MoveRequest_serviceType_idx" ON "public"."MoveRequest"("serviceTyp
 CREATE INDEX "MoveRequest_moveDate_idx" ON "public"."MoveRequest"("moveDate");
 
 -- CreateIndex
-CREATE INDEX "MoveRequest_isFinished_idx" ON "public"."MoveRequest"("isFinished");
+CREATE INDEX "MoveRequest_status_idx" ON "public"."MoveRequest"("status");
 
 -- CreateIndex
 CREATE INDEX "MoveRequest_customerId_serviceType_idx" ON "public"."MoveRequest"("customerId", "serviceType");
 
 -- CreateIndex
 CREATE INDEX "MoveRequest_serviceType_moveDate_idx" ON "public"."MoveRequest"("serviceType", "moveDate");
+
+-- CreateIndex
+CREATE INDEX "MoveRequest_status_createdAt_idx" ON "public"."MoveRequest"("status", "createdAt");
 
 -- CreateIndex
 CREATE INDEX "MoveRequest_createdAt_idx" ON "public"."MoveRequest"("createdAt");
@@ -243,13 +334,13 @@ CREATE INDEX "DirectQuoteRequest_moverId_idx" ON "public"."DirectQuoteRequest"("
 CREATE INDEX "DirectQuoteRequest_status_idx" ON "public"."DirectQuoteRequest"("status");
 
 -- CreateIndex
-CREATE INDEX "DirectQuoteRequest_moveRequestId_moverId_idx" ON "public"."DirectQuoteRequest"("moveRequestId", "moverId");
-
--- CreateIndex
 CREATE INDEX "DirectQuoteRequest_status_createdAt_idx" ON "public"."DirectQuoteRequest"("status", "createdAt");
 
 -- CreateIndex
 CREATE INDEX "DirectQuoteRequest_createdAt_idx" ON "public"."DirectQuoteRequest"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "DirectQuoteRequest_moveRequestId_moverId_key" ON "public"."DirectQuoteRequest"("moveRequestId", "moverId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "RejectedRequest_directRequestId_key" ON "public"."RejectedRequest"("directRequestId");
@@ -267,9 +358,6 @@ CREATE INDEX "Quote_status_idx" ON "public"."Quote"("status");
 CREATE INDEX "Quote_type_idx" ON "public"."Quote"("type");
 
 -- CreateIndex
-CREATE INDEX "Quote_price_idx" ON "public"."Quote"("price");
-
--- CreateIndex
 CREATE INDEX "Quote_moveRequestId_status_idx" ON "public"."Quote"("moveRequestId", "status");
 
 -- CreateIndex
@@ -277,6 +365,9 @@ CREATE INDEX "Quote_status_createdAt_idx" ON "public"."Quote"("status", "created
 
 -- CreateIndex
 CREATE INDEX "Quote_createdAt_idx" ON "public"."Quote"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Quote_moveRequestId_moverId_type_key" ON "public"."Quote"("moveRequestId", "moverId", "type");
 
 -- CreateIndex
 CREATE INDEX "Review_customerId_idx" ON "public"."Review"("customerId");
@@ -294,31 +385,43 @@ CREATE INDEX "Review_moverId_rating_idx" ON "public"."Review"("moverId", "rating
 CREATE INDEX "Review_createdAt_idx" ON "public"."Review"("createdAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Review_customerId_moveRequestId_moverId_key" ON "public"."Review"("customerId", "moveRequestId", "moverId");
+
+-- CreateIndex
 CREATE INDEX "Notification_userId_idx" ON "public"."Notification"("userId");
+
+-- CreateIndex
+CREATE INDEX "Notification_moverId_idx" ON "public"."Notification"("moverId");
 
 -- CreateIndex
 CREATE INDEX "Notification_type_idx" ON "public"."Notification"("type");
 
 -- CreateIndex
-CREATE INDEX "Notification_read_idx" ON "public"."Notification"("read");
+CREATE INDEX "Notification_priority_idx" ON "public"."Notification"("priority");
 
 -- CreateIndex
-CREATE INDEX "Notification_userId_read_idx" ON "public"."Notification"("userId", "read");
+CREATE INDEX "Notification_isRead_idx" ON "public"."Notification"("isRead");
+
+-- CreateIndex
+CREATE INDEX "Notification_userId_isRead_idx" ON "public"."Notification"("userId", "isRead");
 
 -- CreateIndex
 CREATE INDEX "Notification_userId_type_idx" ON "public"."Notification"("userId", "type");
 
 -- CreateIndex
+CREATE INDEX "Notification_moverId_type_idx" ON "public"."Notification"("moverId", "type");
+
+-- CreateIndex
+CREATE INDEX "Notification_expiresAt_idx" ON "public"."Notification"("expiresAt");
+
+-- CreateIndex
 CREATE INDEX "Notification_createdAt_idx" ON "public"."Notification"("createdAt");
 
--- CreateIndex
-CREATE INDEX "Customer_region_idx" ON "public"."Customer"("region");
+-- AddForeignKey
+ALTER TABLE "public"."RefreshToken" ADD CONSTRAINT "RefreshToken_customerId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- CreateIndex
-CREATE INDEX "Customer_createdAt_idx" ON "public"."Customer"("createdAt");
-
--- CreateIndex
-CREATE INDEX "Customer_email_idx" ON "public"."Customer"("email");
+-- AddForeignKey
+ALTER TABLE "public"."RefreshToken" ADD CONSTRAINT "RefreshToken_moverId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Mover"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."CustomerServiceType" ADD CONSTRAINT "CustomerServiceType_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "public"."Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -360,4 +463,10 @@ ALTER TABLE "public"."Review" ADD CONSTRAINT "Review_customerId_fkey" FOREIGN KE
 ALTER TABLE "public"."Review" ADD CONSTRAINT "Review_moverId_fkey" FOREIGN KEY ("moverId") REFERENCES "public"."Mover"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Review" ADD CONSTRAINT "Review_moveRequestId_fkey" FOREIGN KEY ("moveRequestId") REFERENCES "public"."MoveRequest"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Notification" ADD CONSTRAINT "Notification_moverId_fkey" FOREIGN KEY ("moverId") REFERENCES "public"."Mover"("id") ON DELETE SET NULL ON UPDATE CASCADE;

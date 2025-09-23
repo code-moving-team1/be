@@ -7,3 +7,27 @@ Content-Type: application/json
   "departure": "서울 강남구 역삼동",
   "destination": "경기도 수원시 팔달구"
 }
+
+
+###
+POST http://localhost:4000/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "12345678",
+  "phone": "01012345678",
+  "nickname": "test",
+  "career": "1년",
+  "introduction": "편안한 이사를 돕겠습니다",
+  "description": "물건 훼손이나 분실 걱정 없게 확실하게 도와드립니다 단 한 번도 사고난 적 없습니다"
+}
+
+###
+POST http://localhost:4000/api/auth/signin
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "12345678"
+}

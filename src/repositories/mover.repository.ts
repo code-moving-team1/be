@@ -1,41 +1,35 @@
 import { prisma } from "../lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { Region, ServiceType, type Prisma } from "@prisma/client";
 
 export async function findById(id: number) {
   return prisma.mover.findUnique({
     where: {
       id,
+      deleted: false,
     },
   });
 }
 
 export async function findByEmail(email: string) {
-  return prisma.mover.findUnique({ where: { email } });
+  return prisma.mover.findUnique({ where: { email, deleted: false } });
 }
 
 export async function findByNickname(nickname: string) {
-  return prisma.mover.findFirst({ where: { nickname } });
+  return prisma.mover.findFirst({ where: { nickname, deleted: false } });
 }
 
 export async function findSafeById(id: number) {
-  return prisma.mover.findUnique({
-    where: { id: Number(id) },
-    select: {
-      id: true,
-      email: true,
-      phone: true,
-      img: true,
-      nickname: true,
-      career: true,
-      introduction: true,
-      description: true,
-      averageRating: true,
-      totalReviews: true,
-      isActive: true,
-      lastLoginAt: true,
-      createdAt: true,
-    },
+  const raw = await prisma.mover.findUnique({
+    where: { id: Number(id), deleted: false },
+    include: { moverRegions: true, moverServiceTypes: true },
   });
+  return {
+    ...raw,
+    moverRegions: raw?.moverRegions.map((region) => region.region),
+    moverServiceTypes: raw?.moverServiceTypes.map(
+      (serviceType) => serviceType.serviceType
+    ),
+  };
 }
 
 export async function create(mover: {
@@ -46,9 +40,11 @@ export async function create(mover: {
   career: string;
   introduction: string;
   description: string;
+  moverRegions: string[];
+  serviceTypes: string[];
   img?: string;
 }) {
-  return prisma.mover.create({
+  const result = await prisma.mover.create({
     data: {
       email: mover.email,
       password: mover.password,
@@ -60,8 +56,33 @@ export async function create(mover: {
       ...(mover.img !== undefined ? { img: mover.img } : {}),
     },
   });
-}
+  const regionResult = await Promise.all(
+    mover.moverRegions.map((rawRegion) => {
+      return prisma.moverRegion.create({
+        data: {
+          moverId: result.id,
+          region: rawRegion as Region,
+        },
+      });
+    })
+  );
 
+  const serviceTypeResult = await Promise.all(
+    mover.serviceTypes.map((serviceType) => {
+      return prisma.moverServiceType.create({
+        data: { moverId: result.id, serviceType: serviceType as ServiceType },
+      });
+    })
+  );
+
+  return {
+    ...result,
+    moverRegions: regionResult.map((region) => region.region),
+    moverServiceTypes: serviceTypeResult.map(
+      (serviceType) => serviceType.serviceType
+    ),
+  };
+}
 
 export async function update(id: number, data: Prisma.MoverUpdateInput) {
   return prisma.mover.update({
