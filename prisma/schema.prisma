@@ -154,7 +154,7 @@ model RefreshToken {
     userType UserType // CUSTOMER 또는 MOVER
     hashed   String?
 
-    opaqueId String?  @unique
+    opaqueId   String?   @unique
     userAgent  String?   @db.VarChar(500)
     ip         String?   @db.VarChar(45)
     revoked    Boolean   @default(false)
@@ -164,10 +164,12 @@ model RefreshToken {
     updatedAt  DateTime  @updatedAt
 
     // Customer와의 관계 (userType이 CUSTOMER일 때만)
-    customer Customer? @relation("CustomerRefreshToken", fields: [userId], references: [id], onDelete: Cascade, map: "RefreshToken_customerId_fkey")
+    customerId Int?
+    customer   Customer? @relation("CustomerRefreshToken", fields: [customerId], references: [id], onDelete: Cascade)
 
     // Mover와의 관계 (userType이 MOVER일 때만)
-    mover Mover? @relation("MoverRefreshToken", fields: [userId], references: [id], onDelete: Cascade, map: "RefreshToken_moverId_fkey")
+    moverId Int?
+    mover   Mover? @relation("MoverRefreshToken", fields: [moverId], references: [id], onDelete: Cascade)
 
     @@index([userId, userType])
     @@index([expiresAt])
@@ -177,7 +179,7 @@ model RefreshToken {
 model CustomerServiceType {
     id          Int         @id @default(autoincrement())
     serviceType ServiceType
-    customer    Customer    @relation(fields: [customerId], references: [id])
+    customer    Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
     customerId  Int
 
     @@unique([customerId, serviceType])
@@ -188,7 +190,7 @@ model CustomerServiceType {
 model MoverServiceType {
     id          Int         @id @default(autoincrement())
     serviceType ServiceType
-    mover       Mover       @relation(fields: [moverId], references: [id])
+    mover       Mover       @relation(fields: [moverId], references: [id], onDelete: Cascade)
     moverId     Int
 
     @@unique([moverId, serviceType])
@@ -199,7 +201,7 @@ model MoverServiceType {
 model MoverRegion {
     id      Int    @id @default(autoincrement())
     region  Region
-    mover   Mover  @relation(fields: [moverId], references: [id])
+    mover   Mover  @relation(fields: [moverId], references: [id], onDelete: Cascade)
     moverId Int
 
     @@unique([moverId, region])
@@ -209,9 +211,9 @@ model MoverRegion {
 
 model Likes {
     id         Int      @id @default(autoincrement())
-    customer   Customer @relation(fields: [customerId], references: [id])
+    customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
     customerId Int
-    mover      Mover    @relation(fields: [moverId], references: [id])
+    mover      Mover    @relation(fields: [moverId], references: [id], onDelete: Cascade)
     moverId    Int
     createdAt  DateTime @default(now())
 
