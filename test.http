@@ -40,6 +40,6 @@ POST http://localhost:4000/api/move-requests/search
 Content-Type: application/json
 
 {
-  # "regions": ["경기"]
+  "regions": ["경기","서울"]
   # "serviceTypes": ["SMALL"]
 }
