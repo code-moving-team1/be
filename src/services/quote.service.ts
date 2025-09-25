@@ -104,7 +104,13 @@ const getListByRequest = async (moveRequestId: number) => {
   return result;
 };
 
+const updateAllIfAccepted = async (moveRequestId: number, id: number) => {
+  const rejected = await quoteRepo.updateAllToRejected(moveRequestId);
+  const accepted = await quoteRepo.updateToAccepted(id);
+  return accepted;
+};
 export default {
   submit,
   getListByRequest,
+  updateAllIfAccepted,
 };

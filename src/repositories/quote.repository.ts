@@ -49,7 +49,7 @@ const updateToAccepted = async (id: number) => {
 
 const updateAllToRejected = async (moveRequestId: number) => {
   const result = await prisma.quote.updateMany({
-    where: { moveRequestId },
+    where: { moveRequestId, status: "PENDING" },
     data: { status: "REJECTED" },
   });
 };
@@ -57,4 +57,6 @@ const updateAllToRejected = async (moveRequestId: number) => {
 export default {
   create,
   getListByRequest,
+  updateToAccepted,
+  updateAllToRejected,
 };
