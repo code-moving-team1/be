@@ -9,7 +9,7 @@ export type CreateQuoteParams = {
   type: QuoteType;
 };
 
-export const createQuote = async (params: CreateQuoteParams) => {
+const create = async (params: CreateQuoteParams) => {
   const { price, comment, moveRequestId, moverId, type } = params;
   return prisma.quote.create({
     data: {
@@ -55,5 +55,6 @@ const updateAllToRejected = async (moveRequestId: number) => {
 };
 
 export default {
+  create,
   getListByRequest,
 };

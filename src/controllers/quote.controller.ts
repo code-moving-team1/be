@@ -1,12 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { SubmitQuoteBodySchema } from "../schemas/quote.schema";
-import quoteService, { submitQuote } from "../services/quote.service";
+import quoteService from "../services/quote.service";
 
-export const submitQuoteController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const submit = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const moveRequestId = Number(req.params.moveRequestId);
     if (!Number.isFinite(moveRequestId)) {
@@ -28,7 +24,7 @@ export const submitQuoteController = async (
     }
 
     const payload = req.body as SubmitQuoteBody;
-    const result = await submitQuote(moverId, moveRequestId, payload);
+    const result = await quoteService.submit(moverId, moveRequestId, payload);
     return res.status(201).json(result);
   } catch (err) {
     // ✅ 반드시 catch 블록으로 넘겨 에러 핸들러가 처리하도록
@@ -47,5 +43,6 @@ const getListByRequest = async (req: Request, res: Response) => {
 };
 
 export default {
+  submit,
   getListByRequest,
 };

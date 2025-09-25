@@ -1,11 +1,10 @@
 import { Router } from "express";
-import quoteController, {
-  submitQuoteController,
-} from "../controllers/quote.controller";
+import quoteController from "../controllers/quote.controller";
+import { verifyAuth } from "../middlewares/auth";
 
 const router = Router();
 
-router.post("/move-requests/:moveRequestId/quotes", submitQuoteController);
+router.post("/:moveRequestId", verifyAuth, quoteController.submit);
 router.get("/:moveRequestId", quoteController.getListByRequest);
 
 export default router;

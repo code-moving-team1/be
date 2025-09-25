@@ -1,5 +1,5 @@
 import { Prisma, QuoteType } from "@prisma/client";
-import quoteRepo, { createQuote } from "../repositories/quote.repository";
+import quoteRepo from "../repositories/quote.repository";
 import { SubmitQuoteBody } from "../schemas/quote.schema";
 import { createError } from "../utils/HttpError";
 import * as moverRepo from "../repositories/mover.repository";
@@ -12,7 +12,7 @@ const normalizeQuoteType = (raw?: string | QuoteType): QuoteType => {
   return s === "DIRECT" ? QuoteType.DIRECT : QuoteType.NORMAL;
 };
 
-export const submitQuote = async (
+const submit = async (
   moverId: number,
   moveRequestId: number,
   payload: SubmitQuoteBody
@@ -50,7 +50,7 @@ export const submitQuote = async (
 
   // 생성 + 에러 매핑
   try {
-    const created = await createQuote({
+    const created = await quoteRepo.create({
       price: payload.price,
       comment: payload.comment ?? "",
       moveRequestId,
@@ -105,5 +105,6 @@ const getListByRequest = async (moveRequestId: number) => {
 };
 
 export default {
+  submit,
   getListByRequest,
 };
