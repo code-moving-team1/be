@@ -108,8 +108,17 @@ const getListByCustomer = async (customerId: number, isActive = true) => {
   return result;
 };
 
+const updateToCompleted = async (id: number) => {
+  const result = await prisma.moveRequest.update({
+    where: { id },
+    data: { status: "COMPLETED" },
+  });
+  return result;
+};
+
 export default {
   createMoveRequest,
   searchMoveRequests,
   getListByCustomer,
+  updateToCompleted,
 };
