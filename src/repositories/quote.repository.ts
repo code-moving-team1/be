@@ -18,7 +18,7 @@ export const createQuote = async (params: CreateQuoteParams) => {
       moveRequestId,
       moverId,
       type,
-      status: QuoteStatus.pending,
+      status: QuoteStatus.PENDING,
     },
     select: {
       id: true,
@@ -31,4 +31,15 @@ export const createQuote = async (params: CreateQuoteParams) => {
       createdAt: true,
     },
   });
+};
+
+const getListByRequest = async (moveRequestId: number) => {
+  const result = await prisma.quote.findMany({
+    where: { moveRequestId },
+  });
+  return result;
+};
+
+export default {
+  getListByRequest,
 };
