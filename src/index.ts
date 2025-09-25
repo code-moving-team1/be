@@ -5,6 +5,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import moveRequestRoutes from "./routes/moveRequest.routes";
 import authRoutes from "./routes/auth.routes";
+import quoteRoutes from "./routes/quote.routes";
 
 const app = express();
 app.use(
@@ -21,6 +22,7 @@ app.use(morgan("dev"));
 
 app.use("/api/move-requests", moveRequestRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/quote", quoteRoutes);
 
 //
 const PORT = process.env.PORT || 4000;

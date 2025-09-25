@@ -1,5 +1,5 @@
 import { Prisma, QuoteType } from "@prisma/client";
-import { createQuote } from "../repositories/quote.repository";
+import quoteRepo, { createQuote } from "../repositories/quote.repository";
 import { SubmitQuoteBody } from "../schemas/quote.schema";
 import { createError } from "../utils/HttpError";
 
@@ -91,4 +91,13 @@ export const submitQuote = async (
       cause: error,
     });
   }
+};
+
+const getListByRequest = async (moveRequestId: number) => {
+  const result = await quoteRepo.getListByRequest(moveRequestId);
+  return result;
+};
+
+export default {
+  getListByRequest,
 };
