@@ -2,16 +2,22 @@ import { Prisma, QuoteType } from "@prisma/client";
 import quoteRepo, { createQuote } from "../repositories/quote.repository";
 import { SubmitQuoteBody } from "../schemas/quote.schema";
 import { createError } from "../utils/HttpError";
+import * as moverRepo from "../repositories/mover.repository";
+import { getMoveRequestById } from "../repositories/moveRequest.repository";
 
-const isQuoteType = (v: unknown): v is QuoteType =>
-  v === "normal" || v === "direct";
+// ✅ 문자열/enum을 항상 Prisma Enum으로 정규화
+const normalizeQuoteType = (raw?: string | QuoteType): QuoteType => {
+  if (!raw) return QuoteType.NORMAL;
+  const s = String(raw).toUpperCase();
+  return s === "DIRECT" ? QuoteType.DIRECT : QuoteType.NORMAL;
+};
 
 export const submitQuote = async (
   moverId: number,
   moveRequestId: number,
   payload: SubmitQuoteBody
 ) => {
-  const mover = await getTestCodeMoverById(moverId);
+  const mover = await moverRepo.findById(moverId);
   if (!mover) {
     throw createError("AUTH/UNAUTHORIZED", {
       messageOverride: "잘못된 기사 계정입니다.", // 기본 카탈로그 메시지 대신 적용
@@ -19,7 +25,7 @@ export const submitQuote = async (
     });
   }
 
-  const moveRequest = await getTestCodeMoveRequestById(moveRequestId);
+  const moveRequest = await getMoveRequestById(moveRequestId);
   if (!moveRequest) {
     throw createError("REQUEST/NOT_FOUND", {
       messageOverride: "해당 이사 요청을 찾을 수 없습니다.",
@@ -27,9 +33,9 @@ export const submitQuote = async (
     });
   }
 
-  const type = (payload.type ?? "normal") as QuoteType;
+  const type = normalizeQuoteType(payload.type as any);
 
-  if (type === "direct") {
+  if (type === "DIRECT") {
     const directQuote = await getTestCodeDirectQuoteRequest(
       moveRequestId,
       moverId

@@ -8,13 +8,31 @@ export const submitQuoteController = async (
   next: NextFunction
 ) => {
   try {
-    const moverId = (req as any).user?.id as number;
-    const moveRequest = Number(req.params.moveRequestId);
-    const parsed = SubmitQuoteBodySchema.parse(req.body);
-    const result = await submitQuote(moverId, moveRequestId, parsed);
-    return res.status(201).json({ data: result });
-  } catch (e) {
-    return res.status(500).json({ error: "에러 발생" });
+    const moveRequestId = Number(req.params.moveRequestId);
+    if (!Number.isFinite(moveRequestId)) {
+      return res.status(400).json({
+        code: "REQUEST/VALIDATION",
+        message: "유효하지 않은 moveRequestId 입니다.",
+        details: { raw: req.params.moveRequestId },
+      });
+    }
+
+    const moverId =
+      (req as any)?.user?.id ?? (req.body?.moverId as number | undefined);
+
+    if (!moverId) {
+      return res.status(401).json({
+        code: "AUTH/UNAUTHORIZED",
+        message: "기사 인증이 필요합니다.",
+      });
+    }
+
+    const payload = req.body as SubmitQuoteBody;
+    const result = await submitQuote(moverId, moveRequestId, payload);
+    return res.status(201).json(result);
+  } catch (err) {
+    // ✅ 반드시 catch 블록으로 넘겨 에러 핸들러가 처리하도록
+    next(err);
   }
 };
 

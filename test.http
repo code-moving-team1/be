@@ -13,7 +13,7 @@ Content-Type: application/json
 
 
 ###
-POST http://localhost:4000/api/auth/signup
+POST http://localhost:4000/api/auth/mover/signup
 Content-Type: application/json
 
 {
@@ -27,7 +27,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:4000/api/auth/signin
+POST http://localhost:4000/api/auth/mover/signin
 Content-Type: application/json
 
 {
@@ -42,4 +42,15 @@ Content-Type: application/json
 {
   "regions": ["경기","서울"]
   # "serviceTypes": ["SMALL"]
+}
+
+###
+POST http://localhost:4000/api/move-requests/3/quotes
+Content-Type: application/json
+
+{
+  "moverId": 3,
+  "price": 150000,
+  "comment": "안전하고 빠른 이사 보장",
+  "type": "NORMAL"
 }
