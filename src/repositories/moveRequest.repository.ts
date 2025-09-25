@@ -6,7 +6,8 @@ import {
   SearchMoveRequestsInput,
 } from "../schemas/moveRequest.schema";
 
-export const createMoveRequest = async (
+// 이사 요청 생성
+const createMoveRequest = async (
   customerId: number,
   data: CreateMoveRequestInput
 ) => {
@@ -18,42 +19,8 @@ export const createMoveRequest = async (
   });
 };
 
-interface GetMoveRequestsListParams {
-  limit: number;
-  page: number;
-  serviceType?: ServiceType;
-  departureRegion?: string;
-  destinationRegion?: string;
-  orderBy?: "recent" | "deadline";
-}
-
-export const getMoveRequestsList = async ({
-  limit = 5,
-  page = 1,
-  serviceType,
-  departureRegion,
-  destinationRegion,
-  orderBy = "recent",
-}: GetMoveRequestsListParams) => {
-  const whereConditions: Prisma.MoveRequestWhereInput = {
-    status: MoveRequestStatus.ACTIVE,
-    ...(serviceType && { serviceType }),
-    ...(departureRegion && { departureRegion }),
-    ...(destinationRegion && { destinationRegion }),
-  };
-
-  const orderByConditions: Prisma.MoveRequestOrderByWithRelationInput =
-    orderBy === "deadline" ? { moveDate: "asc" } : { createdAt: "desc" };
-
-  return prisma.moveRequest.findMany({
-    where: whereConditions,
-    orderBy: orderByConditions,
-    take: limit,
-    skip: (page - 1) * limit,
-  });
-};
-
-export const searchMoveRequests = async (filters: SearchMoveRequestsInput) => {
+// 이사 요청 목록 불러오기 (기사용)
+const searchMoveRequests = async (filters: SearchMoveRequestsInput) => {
   const { page, pageSize, sort } = filters;
   const where = buildMoveRequestWhere(filters);
 
@@ -123,3 +90,20 @@ function buildMoveRequestWhere(
 
   return where;
 }
+
+const getListByCustomer = async (customerId: number, isActive = true) => {
+  const moveStatus = isActive
+    ? MoveRequestStatus.ACTIVE
+    : MoveRequestStatus.FINISHED || MoveRequestStatus.COMPLETED;
+  const result = await prisma.moveRequest.findMany({
+    where: { customerId, status: moveStatus },
+    orderBy: { createdAt: "asc" },
+  });
+  return result;
+};
+
+export default {
+  createMoveRequest,
+  searchMoveRequests,
+  getListByCustomer,
+};

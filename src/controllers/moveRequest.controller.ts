@@ -4,17 +4,17 @@ import {
   createMoveRequestSchema,
   searchMoveRequestsSchema,
 } from "../schemas/moveRequest.schema";
-import {
+import moveRequestService, {
   handleCreateMoveRequest,
   handleSearchMoveRequests,
 } from "../services/moveRequest.service";
 
+interface AuthenticatedRequest extends Request {
+  user?: { id: number };
+}
 //추후 에러타입 정의 및 에러 규격화 하겠습니다
 
-export const createMoveRequestController = async (
-  req: Request,
-  res: Response
-) => {
+const createMoveRequestController = async (req: Request, res: Response) => {
   try {
     //@any
     // const customerId = (req as any).user?.id; // 로그인 미들웨어에서 넘어왔다고 가정
@@ -43,10 +43,7 @@ export const createMoveRequestController = async (
   }
 };
 
-export const searchMoveRequestsController = async (
-  req: Request,
-  res: Response
-) => {
+const searchMoveRequestsController = async (req: Request, res: Response) => {
   try {
     const parseResult = searchMoveRequestsSchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -61,4 +58,52 @@ export const searchMoveRequestsController = async (
       .status(500)
       .json({ message: error.message || "검색하여 GET 실패" });
   }
+};
+
+const getActiveListByCustomer = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const customerId = req.user?.id || 0;
+  try {
+    const result = await moveRequestService.getListByCustomer(customerId, true);
+    if (!result) {
+      return res.status(400).json({ error: "리스트 없음" });
+    }
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({
+      message: error.message || "고객 이사 요청 리스트(대기 중) GET 실패",
+    });
+  }
+};
+
+const getClosedListByCustomer = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const customerId = req.user?.id || 0;
+  try {
+    const result = await moveRequestService.getListByCustomer(
+      customerId,
+      false
+    );
+    if (!result) {
+      return res.status(400).json({ error: "리스트 없음" });
+    }
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({
+      message: error.message || "고객 이사 요청 리스트(종료됨) GET 실패",
+    });
+  }
+};
+
+export default {
+  createMoveRequestController,
+  searchMoveRequestsController,
+  getActiveListByCustomer,
+  getClosedListByCustomer,
 };
