@@ -36,7 +36,7 @@ const create = async (params: CreateQuoteParams) => {
 const getById = async (id: number) => {
   const result = await prisma.quote.findUnique({
     where: { id },
-    include: { moveRequest: { select: { customerId: true } } },
+    include: { moveRequest: { select: { customerId: true, status: true } } },
   });
   return result;
 };

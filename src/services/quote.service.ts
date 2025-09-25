@@ -125,7 +125,7 @@ const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
     return result;
   } catch (error) {
     throw createError("SERVER/INTERNAL", {
-      messageOverride: "견적 상태 업데이트 중 오류가 발생했습니다.",
+      messageOverride: "견적 확정 중 트랜잭션 오류로 요청이 취소되었습니다.",
     });
   }
 };
