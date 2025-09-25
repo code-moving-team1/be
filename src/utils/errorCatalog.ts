@@ -1,10 +1,12 @@
 export type ErrorCode =
+  | "AUTH/VALIDATION"
   | "AUTH/EMAIL"
   | "AUTH/PASSWORD"
   | "AUTH/UNAUTHORIZED"
   | "USER/NOT_FOUND"
   | "REQUEST/NOT_FOUND"
   | "REQUEST/VALIDATION"
+  | "AUTH/DUPLICATE"
   | "QUOTE/DUPLICATE"
   | "SERVER/INTERNAL";
 
@@ -20,6 +22,12 @@ type CatalogEntry = {
 };
 
 export const ERROR_CATALOG = {
+  "AUTH/VALIDATION": {
+    status: 400,
+    message: "필수 항목 누락",
+    expose: true,
+    logLevel: "warn",
+  },
   "AUTH/EMAIL": {
     status: 401,
     message: "이메일이 올바르지 않습니다.",
@@ -40,7 +48,7 @@ export const ERROR_CATALOG = {
   },
   "USER/NOT_FOUND": {
     status: 404,
-    message: ctx =>
+    message: (ctx) =>
       `사용자를 찾을 수 없습니다${ctx?.id ? ` (id: ${ctx.id})` : ""}.`,
     expose: true,
     logLevel: "info",
@@ -54,6 +62,12 @@ export const ERROR_CATALOG = {
   "REQUEST/NOT_FOUND": {
     status: 404,
     message: "요청하신 리소스를 찾을 수 없습니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "AUTH/DUPLICATE": {
+    status: 409,
+    message: "회원가입 항목에 중복 사항이 있습니다.",
     expose: true,
     logLevel: "info",
   },

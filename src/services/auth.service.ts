@@ -98,7 +98,9 @@ async function checkEmailDuplication(
       : await customerRepo.findByEmail(email);
 
   if (existingUser) {
-    throw createError(409, "이미 등록된 이메일입니다.", "email");
+    throw createError("AUTH/DUPLICATE", {
+      messageOverride: "이미 사용 중인 이메일입니다.",
+    });
   }
 }
 
@@ -136,7 +138,9 @@ export async function signupMover({
   // 닉네임 중복 확인
   const existingNickname = await moverRepo.findByNickname(nickname);
   if (existingNickname) {
-    throw createError("AUTH/NICKNAME", { details: { existingNickname } });
+    throw createError("AUTH/DUPLICATE", {
+      messageOverride: "이미 사용 중인 닉네임입니다.",
+    });
   }
 
   const hashed = await hashPassword(password);
@@ -169,7 +173,9 @@ export async function signupCustomer({
 
   // Customer 전용 필드 검증
   if (!region) {
-    throw new HttpError(400, "필수 항목 누락!", "validation");
+    throw createError("AUTH/VALIDATION", {
+      details: { region },
+    });
   }
 
   // 이메일 중복 확인
@@ -203,12 +209,12 @@ export async function signin({
       : "";
 
   if (!user || !user.password) {
-    throw new HttpError(401, "존재하지 않는 이메일입니다.", "email");
+    throw createError("AUTH/EMAIL");
   }
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
-    throw new HttpError(401, "잘못된 비밀번호 입니다.", "password");
+    throw createError("AUTH/PASSWORD");
   }
 
   // 토큰 생성
@@ -255,7 +261,9 @@ export async function refresh(
     );
 
     if (!refreshTokenRecord) {
-      throw new HttpError(401, "유효하지 않은 리프레시 토큰입니다.", "auth");
+      throw createError("AUTH/UNAUTHORIZED", {
+        messageOverride: "리프레쉬 토큰이 유효하지 않습니다.",
+      });
     }
 
     const newAccessToken = generateAccessToken(
@@ -268,7 +276,9 @@ export async function refresh(
       userId: decoded.id,
     };
   } catch {
-    throw new HttpError(401, "토큰 갱신 실패!", "auth");
+    throw createError("AUTH/UNAUTHORIZED", {
+      messageOverride: "토큰 갱신에 실패했습니다.",
+    });
   }
 }
 
