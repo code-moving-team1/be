@@ -19,8 +19,14 @@ const createMoveRequest = async (
   });
 };
 
-// 이사 요청 목록 불러오기 (기사용)
-const searchMoveRequests = async (filters: SearchMoveRequestsInput) => {
+// 기사 유저 견적 작성용
+export const getMoveRequestById = async (id: number) => {
+  return prisma.moveRequest.findUnique({
+    where: { id },
+  });
+};
+
+export const searchMoveRequests = async (filters: SearchMoveRequestsInput) => {
   const { page, pageSize, sort } = filters;
   const where = buildMoveRequestWhere(filters);
 
