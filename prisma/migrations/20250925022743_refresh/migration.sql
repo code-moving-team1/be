@@ -81,6 +81,8 @@ CREATE TABLE "public"."RefreshToken" (
     "lastUsedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "customerId" INTEGER,
+    "moverId" INTEGER,
 
     CONSTRAINT "RefreshToken_pkey" PRIMARY KEY ("id")
 );
@@ -418,25 +420,25 @@ CREATE INDEX "Notification_expiresAt_idx" ON "public"."Notification"("expiresAt"
 CREATE INDEX "Notification_createdAt_idx" ON "public"."Notification"("createdAt");
 
 -- AddForeignKey
-ALTER TABLE "public"."RefreshToken" ADD CONSTRAINT "RefreshToken_customerId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."RefreshToken" ADD CONSTRAINT "RefreshToken_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "public"."Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."RefreshToken" ADD CONSTRAINT "RefreshToken_moverId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."Mover"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."RefreshToken" ADD CONSTRAINT "RefreshToken_moverId_fkey" FOREIGN KEY ("moverId") REFERENCES "public"."Mover"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."CustomerServiceType" ADD CONSTRAINT "CustomerServiceType_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "public"."Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."CustomerServiceType" ADD CONSTRAINT "CustomerServiceType_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "public"."Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."MoverServiceType" ADD CONSTRAINT "MoverServiceType_moverId_fkey" FOREIGN KEY ("moverId") REFERENCES "public"."Mover"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."MoverServiceType" ADD CONSTRAINT "MoverServiceType_moverId_fkey" FOREIGN KEY ("moverId") REFERENCES "public"."Mover"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."MoverRegion" ADD CONSTRAINT "MoverRegion_moverId_fkey" FOREIGN KEY ("moverId") REFERENCES "public"."Mover"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."MoverRegion" ADD CONSTRAINT "MoverRegion_moverId_fkey" FOREIGN KEY ("moverId") REFERENCES "public"."Mover"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Likes" ADD CONSTRAINT "Likes_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "public"."Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Likes" ADD CONSTRAINT "Likes_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "public"."Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Likes" ADD CONSTRAINT "Likes_moverId_fkey" FOREIGN KEY ("moverId") REFERENCES "public"."Mover"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Likes" ADD CONSTRAINT "Likes_moverId_fkey" FOREIGN KEY ("moverId") REFERENCES "public"."Mover"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."MoveRequest" ADD CONSTRAINT "MoveRequest_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "public"."Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
