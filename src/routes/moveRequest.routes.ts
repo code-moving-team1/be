@@ -1,15 +1,23 @@
 // src/routes/moveRequest.routes.ts
 
 import { Router } from "express";
-import {
-  createMoveRequestController,
-  searchMoveRequestsController,
-} from "../controllers/moveRequest.controller";
+import moveRequestController from "../controllers/moveRequest.controller";
+import { verifyAuth } from "../middlewares/auth";
 
 const router = Router();
 
 // POST
-router.post("/", createMoveRequestController); // 생성
-router.post("/search", searchMoveRequestsController); // Filtering 검색하여 GET
+router.post("/", moveRequestController.createMoveRequestController); // 생성
+router.post("/search", moveRequestController.searchMoveRequestsController); // Filtering 검색하여 GET
+router.get(
+  "/customer/active",
+  verifyAuth,
+  moveRequestController.getActiveListByCustomer
+);
+router.get(
+  "/customer/closed",
+  verifyAuth,
+  moveRequestController.getClosedListByCustomer
+);
 
 export default router;
