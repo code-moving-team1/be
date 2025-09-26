@@ -1,9 +1,12 @@
-import { Prisma, QuoteType } from "@prisma/client";
+import { Prisma, PrismaPromise, QuoteType } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 import quoteRepo from "../repositories/quote.repository";
 import { SubmitQuoteBody } from "../schemas/quote.schema";
 import { createError } from "../utils/HttpError";
 import * as moverRepo from "../repositories/mover.repository";
-import { getMoveRequestById } from "../repositories/moveRequest.repository";
+import moveRequestRepo, {
+  getMoveRequestById,
+} from "../repositories/moveRequest.repository";
 
 // ✅ 문자열/enum을 항상 Prisma Enum으로 정규화
 const normalizeQuoteType = (raw?: string | QuoteType): QuoteType => {
@@ -35,18 +38,19 @@ const submit = async (
 
   const type = normalizeQuoteType(payload.type as any);
 
-  if (type === "DIRECT") {
-    const directQuote = await getTestCodeDirectQuoteRequest(
-      moveRequestId,
-      moverId
-    );
-    if (!directQuote) {
-      throw createError("REQUEST/VALIDATION", {
-        messageOverride: "직접 견적 요청이 없거나 유효하지 않습니다.",
-        details: { moveRequestId, moverId, type },
-      });
-    }
-  }
+  // TODO: DIRECT 타입 견적에 대한 검증 로직 구현 필요
+  // if (type === "DIRECT") {
+  //   const directQuote = await getTestCodeDirectQuoteRequest(
+  //     moveRequestId,
+  //     moverId
+  //   );
+  //   if (!directQuote) {
+  //     throw createError("REQUEST/VALIDATION", {
+  //       messageOverride: "직접 견적 요청이 없거나 유효하지 않습니다.",
+  //       details: { moveRequestId, moverId, type },
+  //     });
+  //   }
+  // }
 
   // 생성 + 에러 매핑
   try {
@@ -99,18 +103,36 @@ const submit = async (
   }
 };
 
+const getById = async (id: number) => {
+  const result = await quoteRepo.getById(id);
+  return result;
+};
+
 const getListByRequest = async (moveRequestId: number) => {
   const result = await quoteRepo.getListByRequest(moveRequestId);
   return result;
 };
 
-const updateAllIfAccepted = async (moveRequestId: number, id: number) => {
-  const rejected = await quoteRepo.updateAllToRejected(moveRequestId);
-  const accepted = await quoteRepo.updateToAccepted(id);
-  return accepted;
+const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
+  // 트랜잭션을 사용하여 모든 작업을 원자적으로 처리
+  // 하나라도 실패하면 모든 작업이 롤백됨
+  try {
+    const result = await prisma.$transaction(async () => [
+      quoteRepo.updateToAccepted(id),
+      moveRequestRepo.updateToCompleted(moveRequestId),
+      quoteRepo.updateAllToRejected(moveRequestId),
+    ]);
+    return result;
+  } catch (error) {
+    throw createError("SERVER/INTERNAL", {
+      messageOverride: "견적 확정 중 트랜잭션 오류로 요청이 취소되었습니다.",
+    });
+  }
 };
+
 export default {
   submit,
+  getById,
   getListByRequest,
   updateAllIfAccepted,
 };

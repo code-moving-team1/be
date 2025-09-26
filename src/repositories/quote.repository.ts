@@ -33,6 +33,14 @@ const create = async (params: CreateQuoteParams) => {
   });
 };
 
+const getById = async (id: number) => {
+  const result = await prisma.quote.findUnique({
+    where: { id },
+    include: { moveRequest: { select: { customerId: true, status: true } } },
+  });
+  return result;
+};
+
 const getListByRequest = async (moveRequestId: number) => {
   const result = await prisma.quote.findMany({
     where: { moveRequestId },
@@ -45,17 +53,24 @@ const updateToAccepted = async (id: number) => {
     where: { id },
     data: { status: "ACCEPTED" },
   });
+  return result;
 };
 
 const updateAllToRejected = async (moveRequestId: number) => {
   const result = await prisma.quote.updateMany({
-    where: { moveRequestId, status: "PENDING" },
+    where: {
+      moveRequestId,
+      status: "PENDING",
+      moveRequest: { status: "COMPLETED" },
+    },
     data: { status: "REJECTED" },
   });
+  return result;
 };
 
 export default {
   create,
+  getById,
   getListByRequest,
   updateToAccepted,
   updateAllToRejected,
