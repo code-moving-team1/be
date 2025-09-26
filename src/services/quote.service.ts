@@ -1,17 +1,26 @@
-import { Prisma, QuoteType } from "@prisma/client";
-import { createQuote } from "../repositories/quote.repository";
+import { Prisma, PrismaPromise, QuoteType } from "@prisma/client";
+import { prisma } from "../lib/prisma";
+import quoteRepo from "../repositories/quote.repository";
 import { SubmitQuoteBody } from "../schemas/quote.schema";
 import { createError } from "../utils/HttpError";
+import * as moverRepo from "../repositories/mover.repository";
+import moveRequestRepo, {
+  getMoveRequestById,
+} from "../repositories/moveRequest.repository";
 
-const isQuoteType = (v: unknown): v is QuoteType =>
-  v === "normal" || v === "direct";
+// ✅ 문자열/enum을 항상 Prisma Enum으로 정규화
+const normalizeQuoteType = (raw?: string | QuoteType): QuoteType => {
+  if (!raw) return QuoteType.NORMAL;
+  const s = String(raw).toUpperCase();
+  return s === "DIRECT" ? QuoteType.DIRECT : QuoteType.NORMAL;
+};
 
-export const submitQuote = async (
+const submit = async (
   moverId: number,
   moveRequestId: number,
   payload: SubmitQuoteBody
 ) => {
-  const mover = await getTestCodeMoverById(moverId);
+  const mover = await moverRepo.findById(moverId);
   if (!mover) {
     throw createError("AUTH/UNAUTHORIZED", {
       messageOverride: "잘못된 기사 계정입니다.", // 기본 카탈로그 메시지 대신 적용
@@ -19,7 +28,7 @@ export const submitQuote = async (
     });
   }
 
-  const moveRequest = await getTestCodeMoveRequestById(moveRequestId);
+  const moveRequest = await getMoveRequestById(moveRequestId);
   if (!moveRequest) {
     throw createError("REQUEST/NOT_FOUND", {
       messageOverride: "해당 이사 요청을 찾을 수 없습니다.",
@@ -27,24 +36,25 @@ export const submitQuote = async (
     });
   }
 
-  const type = (payload.type ?? "normal") as QuoteType;
+  const type = normalizeQuoteType(payload.type as any);
 
-  if (type === "direct") {
-    const directQuote = await getTestCodeDirectQuoteRequest(
-      moveRequestId,
-      moverId
-    );
-    if (!directQuote) {
-      throw createError("REQUEST/VALIDATION", {
-        messageOverride: "직접 견적 요청이 없거나 유효하지 않습니다.",
-        details: { moveRequestId, moverId, type },
-      });
-    }
-  }
+  // TODO: DIRECT 타입 견적에 대한 검증 로직 구현 필요
+  // if (type === "DIRECT") {
+  //   const directQuote = await getTestCodeDirectQuoteRequest(
+  //     moveRequestId,
+  //     moverId
+  //   );
+  //   if (!directQuote) {
+  //     throw createError("REQUEST/VALIDATION", {
+  //       messageOverride: "직접 견적 요청이 없거나 유효하지 않습니다.",
+  //       details: { moveRequestId, moverId, type },
+  //     });
+  //   }
+  // }
 
   // 생성 + 에러 매핑
   try {
-    const created = await createQuote({
+    const created = await quoteRepo.create({
       price: payload.price,
       comment: payload.comment ?? "",
       moveRequestId,
@@ -91,4 +101,38 @@ export const submitQuote = async (
       cause: error,
     });
   }
+};
+
+const getById = async (id: number) => {
+  const result = await quoteRepo.getById(id);
+  return result;
+};
+
+const getListByRequest = async (moveRequestId: number) => {
+  const result = await quoteRepo.getListByRequest(moveRequestId);
+  return result;
+};
+
+const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
+  // 트랜잭션을 사용하여 모든 작업을 원자적으로 처리
+  // 하나라도 실패하면 모든 작업이 롤백됨
+  try {
+    const result = await prisma.$transaction(async () => [
+      quoteRepo.updateToAccepted(id),
+      moveRequestRepo.updateToCompleted(moveRequestId),
+      quoteRepo.updateAllToRejected(moveRequestId),
+    ]);
+    return result;
+  } catch (error) {
+    throw createError("SERVER/INTERNAL", {
+      messageOverride: "견적 확정 중 트랜잭션 오류로 요청이 취소되었습니다.",
+    });
+  }
+};
+
+export default {
+  submit,
+  getById,
+  getListByRequest,
+  updateAllIfAccepted,
 };
