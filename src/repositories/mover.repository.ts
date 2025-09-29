@@ -53,6 +53,7 @@ export async function create(mover: {
   serviceTypes: string[];
   userPlatform?: UserPlatform;
   googleId?: string;
+  naverId?: string;
   img?: string;
 }) {
   const result = await prisma.mover.create({
@@ -66,6 +67,7 @@ export async function create(mover: {
       description: mover.description,
       ...(mover.userPlatform ? { userPlatform: mover.userPlatform } : {}),
       ...(mover.googleId ? { googleId: mover.googleId } : {}),
+      ...(mover.naverId ? { naverId: mover.naverId } : {}),
       ...(mover.img !== undefined ? { img: mover.img } : {}),
     },
   });

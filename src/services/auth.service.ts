@@ -48,6 +48,14 @@ type GoogleOAuthDto = {
   userType: UserType;
 };
 
+type NaverOAuthDto = {
+  naverId: string;
+  email: string;
+  nickname: string;
+  profileImage?: string;
+  userType: UserType;
+};
+
 type User = {
   userId: number;
   userType: UserType;
@@ -389,6 +397,77 @@ export async function googleOAuth({
 }
 
 // ⭕ 7 - 네이버 OAuth
+export async function naverOAuth({
+  naverId,
+  email,
+  nickname,
+  profileImage,
+  userType,
+}: NaverOAuthDto) {
+  try {
+    // 기존 사용자 확인 (이메일로)
+    let existingUser: Mover | Customer | null = null;
+
+    if (userType === "MOVER") {
+      existingUser = await moverRepo.findByEmail(email);
+    } else if (userType === "CUSTOMER") {
+      existingUser = await customerRepo.findByEmail(email);
+    } else {
+      throw createError("AUTH/NAVER_OAUTH", {
+        messageOverride: "Naver OAuth 로그인에 실패했습니다.",
+      });
+    }
+
+    if (existingUser) {
+      if (existingUser.userPlatform === "NAVER") {
+        return toSafeUser(existingUser);
+      } else {
+        throw createError("AUTH/ACCOUNT_CONFLICT");
+      }
+    }
+
+    // 새 사용자 생성
+    const randomPassword = Math.random().toString(36).slice(-8); // 임시 비밀번호
+    const hashedPassword = await hashPassword(randomPassword);
+
+    if (userType === "MOVER") {
+      // Mover 생성 (Naver OAuth용 기본값 설정)
+      const mover = await moverRepo.create({
+        email,
+        password: hashedPassword,
+        phone: "00000000000", // 기본값, 나중에 업데이트 필요
+        nickname: nickname, // Naver 닉네임 사용
+        career: "신규", // 기본값
+        introduction: "Naver OAuth로 가입한 사용자입니다.", // 기본값
+        description: "Naver OAuth로 가입한 사용자입니다.", // 기본값
+        moverRegions: [], // 빈 배열
+        serviceTypes: [], // 빈 배열
+        userPlatform: "NAVER",
+        naverId: naverId, // Naver ID 저장
+        img: profileImage,
+      } as any);
+
+      return toSafeUser(mover);
+    } else if (userType === "CUSTOMER") {
+      const customer = await customerRepo.create({
+        email,
+        password: hashedPassword,
+        phone: "00000000000", // 기본값, 나중에 업데이트 필요
+        region: "서울", // 기본값, 나중에 업데이트 필요
+        serviceTypes: [], // 빈 배열
+        userPlatform: "NAVER",
+        naverId: naverId, // Naver ID 저장
+        img: profileImage,
+      } as any);
+
+      return toSafeUser(customer);
+    }
+  } catch (error) {
+    throw createError("AUTH/NAVER_OAUTH", {
+      messageOverride: "Naver OAuth 로그인에 실패했습니다.",
+    });
+  }
+}
 
 export default {
   signupMover,
@@ -398,4 +477,5 @@ export default {
   logout,
   getMe,
   googleOAuth,
+  naverOAuth,
 };

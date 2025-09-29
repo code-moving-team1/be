@@ -45,6 +45,7 @@ export async function create(customer: {
   serviceTypes: string[];
   userPlatform?: UserPlatform;
   googleId?: string;
+  naverId?: string;
   img?: string;
 }) {
   const result = await prisma.customer.create({
@@ -55,6 +56,7 @@ export async function create(customer: {
       region: customer.region as Region, // Region enum으로 변환
       ...(customer.userPlatform ? { userPlatform: customer.userPlatform } : {}),
       ...(customer.googleId ? { googleId: customer.googleId } : {}),
+      ...(customer.naverId ? { naverId: customer.naverId } : {}),
       ...(customer.img !== undefined ? { img: customer.img } : {}),
     },
   });

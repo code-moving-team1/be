@@ -158,8 +158,7 @@ customerController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
   }
 });
 
-// Google OAuth 라우트들
-// Google 로그인 시작
+// Google OAuth
 moverController.get(
   "/google",
   passport.authenticate("google-mover", {
@@ -216,6 +215,88 @@ customerController.get(
         return res
           .status(401)
           .json({ error: "Google OAuth 인증에 실패했습니다." });
+      }
+
+      // 토큰 생성 및 refresh db에 저장
+      const { accessToken, refreshToken } = await saveTokens(
+        user.id,
+        "CUSTOMER"
+      );
+
+      // 쿠키에 토큰 설정
+      setTokenCookie(res, "accessToken", accessToken);
+      setTokenCookie(res, "refreshToken", refreshToken);
+
+      // 성공 시 리다이렉트 (프론트엔드 URL로)
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }/auth/success?type=customer`
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Naver OAuth 라우트들
+// Naver 로그인 시작
+moverController.get(
+  "/naver",
+  passport.authenticate("naver-mover", {
+    scope: ["profile", "email"],
+  })
+);
+
+customerController.get(
+  "/naver",
+  passport.authenticate("naver-customer", {
+    scope: ["profile", "email"],
+  })
+);
+
+// Naver OAuth 콜백
+moverController.get(
+  "/naver/callback",
+  passport.authenticate("naver-mover", { failureRedirect: "/login" }),
+  async (req: any, res, next) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Naver OAuth 인증에 실패했습니다." });
+      }
+
+      // 토큰 생성 및 refresh db에 저장
+      const { accessToken, refreshToken } = await saveTokens(user.id, "MOVER");
+
+      // 쿠키에 토큰 설정
+      setTokenCookie(res, "accessToken", accessToken);
+      setTokenCookie(res, "refreshToken", refreshToken);
+
+      // 성공 시 리다이렉트 (프론트엔드 URL로)
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }/auth/success?type=mover`
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+customerController.get(
+  "/naver/callback",
+  passport.authenticate("naver-customer", { failureRedirect: "/login" }),
+  async (req: any, res, next) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Naver OAuth 인증에 실패했습니다." });
       }
 
       // 토큰 생성 및 refresh db에 저장
