@@ -1,5 +1,8 @@
 import passport from "passport";
-import { googleMoverStrategy, googleCustomerStrategy } from "./googleStrategy";
+import {
+  googleMoverStrategy,
+  googleCustomerStrategy,
+} from "../middlewares/passport/googleStrategy";
 
 // Strategy 등록
 // Google OAuth Strategies

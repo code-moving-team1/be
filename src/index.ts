@@ -4,7 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import passport from "./middlewares/passport";
+import passport from "./lib/passport";
 import moveRequestRoutes from "./routes/moveRequest.routes";
 import authRoutes from "./routes/auth.routes";
 import quoteRoutes from "./routes/quote.routes";

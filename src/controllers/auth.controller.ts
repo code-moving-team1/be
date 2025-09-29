@@ -1,7 +1,7 @@
 import express from "express";
 import authService, { saveTokens } from "../services/auth.service";
 import auth from "../middlewares/auth";
-import passport from "../middlewares/passport";
+import passport from "../lib/passport";
 
 interface AuthenticatedRequest extends express.Request {
   user?: { id: number };
