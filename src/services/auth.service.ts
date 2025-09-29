@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import * as moverRepo from "../repositories/mover.repository";
 import * as customerRepo from "../repositories/customer.repository";
 import * as refreshRepo from "../repositories/refresh.repository";
-import { UserPlatform, type Customer, type Mover } from "@prisma/client";
+import { type Customer, type Mover } from "@prisma/client";
 import { createError } from "../utils/HttpError";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -41,15 +41,6 @@ type SignInDto = {
 
 type GoogleOAuthDto = {
   googleId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  profileImage?: string;
-  userType: UserType;
-};
-
-type NaverOAuthDto = {
-  naverId: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -398,98 +389,6 @@ export async function googleOAuth({
 }
 
 // ⭕ 7 - 네이버 OAuth
-export async function naverOAuth({
-  naverId,
-  email,
-  firstName,
-  lastName,
-  profileImage,
-  userType,
-}: NaverOAuthDto): Promise<{ id: number; userType: UserType }> {
-  try {
-    // 1. 네이버 ID로 기존 사용자 확인 (우선순위)
-    let existingUser: Mover | Customer | null = null;
-
-    if (userType === "MOVER") {
-      existingUser = await moverRepo.findByNaverId(naverId);
-    } else if (userType === "CUSTOMER") {
-      existingUser = await customerRepo.findByNaverId(naverId);
-    } else {
-      // @TODO. userType이 제대로 입력되지 않은 경우. 에러처리 필요.
-    }
-
-    if (existingUser) {
-      if (existingUser.userPlatform === "NAVER") {
-        return toSafeUser(existingUser);
-      } else {
-        // @TODO. 네이버 계정으로 간편 로그인을 시도하는데,
-        // 그 아이디가 일반 계정으로 이미 가입이 되어 있는 경우
-        // 예외 처리 필요
-      }
-    }
-
-    // 2. 이메일로 기존 사용자 확인
-    if (userType === "MOVER") {
-      existingUser = await moverRepo.findByEmail(email);
-    } else if (userType === "CUSTOMER") {
-      existingUser = await customerRepo.findByEmail(email);
-    } else {
-      // @TODO. userType이 제대로 입력되지 않은 경우. 에러처리 필요.
-    }
-
-    if (existingUser) {
-      if (existingUser.userPlatform === "NAVER") {
-        return toSafeUser(existingUser);
-      } else {
-        // @TODO. 네이버 계정으로 간편 로그인을 시도하는데,
-        // 그 아이디가 일반 계정으로 이미 가입이 되어 있는 경우
-        // 예외 처리 필요
-      }
-    }
-
-    // 새 사용자 생성
-    const fullName = `${firstName} ${lastName}`.trim();
-    const randomPassword = Math.random().toString(36).slice(-8); // 임시 비밀번호
-    const hashedPassword = await hashPassword(randomPassword);
-
-    if (userType === "MOVER") {
-      // Mover 생성 (네이버 OAuth용 기본값 설정)
-      const mover = await moverRepo.create({
-        email,
-        password: hashedPassword,
-        phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        nickname: fullName, // 기본 닉네임
-        career: "신규", // 기본값
-        introduction: "네이버 OAuth로 가입한 사용자입니다.", // 기본값
-        description: "네이버 OAuth로 가입한 사용자입니다.", // 기본값
-        moverRegions: [], // 빈 배열
-        serviceTypes: [], // 빈 배열
-        userPlatform: "NAVER",
-        naverId: naverId, // 네이버 ID 저장
-        img: profileImage,
-      } as any);
-
-      return toSafeUser(mover);
-    } else if (userType === "CUSTOMER") {
-      const customer = await customerRepo.create({
-        email,
-        password: hashedPassword,
-        phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        region: "서울", // 기본값, 나중에 업데이트 필요
-        serviceTypes: [], // 빈 배열
-        userPlatform: "NAVER",
-        naverId: naverId, // 네이버 ID 저장
-        img: profileImage,
-      } as any);
-
-      return toSafeUser(customer);
-    }
-  } catch (error) {
-    throw createError("AUTH/NAVER_OAUTH", {
-      messageOverride: "네이버 OAuth 로그인에 실패했습니다.",
-    });
-  }
-}
 
 export default {
   signupMover,
@@ -499,5 +398,4 @@ export default {
   logout,
   getMe,
   googleOAuth,
-  naverOAuth,
 };

@@ -23,15 +23,6 @@ export async function findByGoogleId(googleId: string) {
   });
 }
 
-export async function findByNaverId(naverId: string) {
-  return prisma.customer.findFirst({
-    where: {
-      naverId,
-      deleted: false,
-    },
-  });
-}
-
 export async function findSafeById(id: number) {
   const raw = await prisma.customer.findUnique({
     where: { id: Number(id), deleted: false },
