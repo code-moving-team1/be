@@ -44,6 +44,27 @@ const getById = async (id: number) => {
 const getListByRequest = async (moveRequestId: number) => {
   const result = await prisma.quote.findMany({
     where: { moveRequestId },
+    select: {
+      id: true,
+      price: true,
+      comment: true,
+      status: true,
+      type: true,
+      moverId: true,
+      createdAt: true,
+      mover: {
+        select: {
+          id: true,
+          nickname: true,
+          career: true,
+          averageRating: true,
+          totalReviews: true,
+          img: true,
+          _count: { select: { likes: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
   });
   return result;
 };

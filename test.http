@@ -45,12 +45,12 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:4000/api/quote/6
+POST http://localhost:4000/api/quote/move-requests/8
 Content-Type: application/json
 
 {
   "moverId": 3,
-  "price": 150000,
-  "comment": "안전하고 빠른 이사 보장",
+  "price": 3000000,
+  "comment": "자기가 직접하는 이사",
   "type": "NORMAL"
 }
