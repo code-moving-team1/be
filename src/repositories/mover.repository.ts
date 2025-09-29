@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import { Region, ServiceType, type Prisma } from "@prisma/client";
+import { Region, ServiceType, UserPlatform, type Prisma } from "@prisma/client";
 
 export async function findById(id: number) {
   return prisma.mover.findUnique({
@@ -16,6 +16,24 @@ export async function findByEmail(email: string) {
 
 export async function findByNickname(nickname: string) {
   return prisma.mover.findFirst({ where: { nickname, deleted: false } });
+}
+
+export async function findByGoogleId(googleId: string) {
+  return prisma.mover.findFirst({
+    where: {
+      googleId,
+      deleted: false,
+    },
+  });
+}
+
+export async function findByNaverId(naverId: string) {
+  return prisma.mover.findFirst({
+    where: {
+      naverId,
+      deleted: false,
+    },
+  });
 }
 
 export async function findSafeById(id: number) {
@@ -42,6 +60,8 @@ export async function create(mover: {
   description: string;
   moverRegions: string[];
   serviceTypes: string[];
+  userPlatform?: UserPlatform;
+  googleId?: string;
   img?: string;
 }) {
   const result = await prisma.mover.create({
@@ -53,6 +73,8 @@ export async function create(mover: {
       career: mover.career,
       introduction: mover.introduction,
       description: mover.description,
+      ...(mover.userPlatform ? { userPlatform: mover.userPlatform } : {}),
+      ...(mover.googleId ? { googleId: mover.googleId } : {}),
       ...(mover.img !== undefined ? { img: mover.img } : {}),
     },
   });

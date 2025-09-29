@@ -1,0 +1,192 @@
+# ===========================================
+# 네이버 OAuth 테스트 시나리오
+# ===========================================
+
+### 1. 네이버 OAuth 로그인 시작 (Mover)
+# 브라우저에서 이 URL을 열어서 네이버 로그인을 진행하세요
+# http://localhost:4000/api/auth/mover/naver
+
+### 2. 네이버 OAuth 로그인 시작 (Customer)  
+# 브라우저에서 이 URL을 열어서 네이버 로그인을 진행하세요
+# http://localhost:4000/api/auth/customer/naver
+
+# ===========================================
+# 🔑 토큰 획득 방법
+# ===========================================
+# 
+# 1. 위의 네이버 OAuth URL을 브라우저에서 열기
+# 2. 네이버 로그인 완료 후 프론트엔드로 리다이렉트됨
+# 3. 브라우저 개발자 도구 (F12) → Application → Cookies → localhost:4000
+# 4. accessToken과 refreshToken 쿠키 값을 복사
+# 5. 아래 테스트에서 "your-access-token", "your-refresh-token" 부분을 실제 토큰으로 교체
+#
+# 예시:
+# Cookie: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# ===========================================
+# 인증이 필요한 API 테스트 (쿠키 기반)
+# ===========================================
+
+### 3. Mover 내 정보 조회 (네이버 OAuth 로그인 후)
+GET http://localhost:4000/api/auth/mover/me
+Cookie: accessToken=your-access-token; refreshToken=your-refresh-token
+
+### 4. Customer 내 정보 조회 (네이버 OAuth 로그인 후)
+GET http://localhost:4000/api/auth/customer/me
+Cookie: accessToken=your-access-token; refreshToken=your-refresh-token
+
+### 5. 토큰 갱신 (Mover)
+POST http://localhost:4000/api/auth/mover/refresh-token
+Cookie: refreshToken=your-refresh-token
+
+### 6. 토큰 갱신 (Customer)
+POST http://localhost:4000/api/auth/customer/refresh-token
+Cookie: refreshToken=your-refresh-token
+
+### 7. 로그아웃 (Mover)
+POST http://localhost:4000/api/auth/mover/logout
+Cookie: accessToken=your-access-token; refreshToken=your-refresh-token
+
+### 8. 로그아웃 (Customer)
+POST http://localhost:4000/api/auth/customer/logout
+Cookie: accessToken=your-access-token; refreshToken=your-refresh-token
+
+# ===========================================
+# 이사 요청 관련 API 테스트 (네이버 OAuth 로그인 후)
+# ===========================================
+
+### 9. 이사 요청 생성 (Customer 네이버 OAuth 로그인 필요)
+POST http://localhost:4000/api/move-requests
+Content-Type: application/json
+Cookie: accessToken=your-access-token; refreshToken=your-refresh-token
+
+{
+  "serviceType": "SMALL",
+  "moveDate": "2025-12-25",
+  "departure": "경기도 남양주시 화도읍",
+  "departureRegion": "경기",
+  "destination": "제주 서귀포시 서홍동",
+  "destinationRegion": "제주"
+}
+
+### 10. 이사 요청 검색 (Mover 네이버 OAuth 로그인 필요)
+POST http://localhost:4000/api/move-requests/search
+Content-Type: application/json
+Cookie: accessToken=your-access-token; refreshToken=your-refresh-token
+
+{
+  "regions": ["경기", "서울"]
+}
+
+### 11. 견적 제출 (Mover 네이버 OAuth 로그인 필요)
+POST http://localhost:4000/api/quote/6
+Content-Type: application/json
+Cookie: accessToken=your-access-token; refreshToken=your-refresh-token
+
+{
+  "moverId": 3,
+  "price": 150000,
+  "comment": "안전하고 빠른 이사 보장",
+  "type": "NORMAL"
+}
+
+# ===========================================
+# 네이버 OAuth vs Google OAuth vs 기존 로그인 비교 테스트
+# ===========================================
+
+### 12. Google OAuth 로그인 (비교용)
+# http://localhost:4000/api/auth/mover/google
+
+### 13. Google OAuth 로그인 (비교용)
+# http://localhost:4000/api/auth/customer/google
+
+### 14. 기존 Mover 회원가입 (비교용)
+POST http://localhost:4000/api/auth/mover/signup
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "12345678",
+  "phone": "01012345678",
+  "nickname": "test",
+  "career": "1년",
+  "introduction": "편안한 이사를 돕겠습니다",
+  "description": "물건 훼손이나 분실 걱정 없게 확실하게 도와드립니다 단 한 번도 사고난 적 없습니다"
+}
+
+### 15. 기존 Mover 로그인 (비교용)
+POST http://localhost:4000/api/auth/mover/signin
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "12345678"
+}
+
+### 16. 기존 Customer 회원가입 (비교용)
+POST http://localhost:4000/api/auth/customer/signup
+Content-Type: application/json
+
+{
+  "email": "customer@test.com",
+  "password": "12345678",
+  "phone": "01087654321",
+  "region": "서울",
+  "serviceTypes": ["SMALL", "MEDIUM"]
+}
+
+### 17. 기존 Customer 로그인 (비교용)
+POST http://localhost:4000/api/auth/customer/signin
+Content-Type: application/json
+
+{
+  "email": "customer@test.com",
+  "password": "12345678"
+}
+
+# ===========================================
+# 에러 테스트
+# ===========================================
+
+### 18. 인증 없이 보호된 API 접근 (에러 발생 예상)
+GET http://localhost:4000/api/auth/mover/me
+
+### 19. 잘못된 토큰으로 API 접근 (에러 발생 예상)
+GET http://localhost:4000/api/auth/mover/me
+Cookie: accessToken=invalid-token
+
+### 20. 만료된 토큰으로 API 접근 (에러 발생 예상)
+GET http://localhost:4000/api/auth/mover/me
+Cookie: accessToken=expired-token
+
+### 21. 네이버 OAuth 실패 시 리다이렉트 테스트
+# 네이버 OAuth에서 거부하거나 에러가 발생했을 때
+# http://localhost:4000/api/auth/mover/naver/callback?error=access_denied
+
+# ===========================================
+# 🧪 테스트 시나리오 가이드
+# ===========================================
+#
+# 1. 네이버 OAuth 로그인 테스트:
+#    - 브라우저에서 http://localhost:4000/api/auth/mover/naver 접속
+#    - 네이버 로그인 완료 후 토큰 확인
+#
+# 2. 인증된 API 테스트:
+#    - 토큰을 복사하여 아래 API들 테스트
+#    - 내 정보 조회, 토큰 갱신, 로그아웃 등
+#
+# 3. 비즈니스 로직 테스트:
+#    - 이사 요청 생성/검색
+#    - 견적 제출
+#
+# 4. 에러 처리 테스트:
+#    - 인증 없이 API 접근
+#    - 잘못된 토큰으로 접근
+#
+# 5. 비교 테스트:
+#    - 네이버 OAuth vs Google OAuth vs 기존 로그인 방식
+#    - 동일한 기능이 정상 작동하는지 확인
+#
+# 6. 플랫폼별 사용자 구분:
+#    - userPlatform: "NAVER", "GOOGLE", "NORMAL"
+#    - 각 플랫폼별로 다른 처리 로직 확인

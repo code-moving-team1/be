@@ -88,6 +88,13 @@ enum UserStatus {
     DELETED
 }
 
+enum UserPlatform {
+    NORMAL
+    GOOGLE
+    NAVER
+    KAKAO
+}
+
 model Customer {
     id                   Int                   @id @default(autoincrement())
     email                String                @unique @db.VarChar(255)
@@ -96,6 +103,9 @@ model Customer {
     img                  String                @default("") @db.VarChar(500)
     region               Region
     isActive             Boolean               @default(true)
+    userPlatform         UserPlatform          @default(NORMAL)
+    googleId             String?               @unique @db.VarChar(255)
+    naverId              String?               @unique @db.VarChar(255)
     deleted              Boolean               @default(false)
     lastLoginAt          DateTime?
     createdAt            DateTime              @default(now())
@@ -127,6 +137,9 @@ model Mover {
     averageRating       Float                @default(0.0)
     totalReviews        Int                  @default(0)
     isActive            Boolean              @default(true)
+    userPlatform        UserPlatform         @default(NORMAL)
+    googleId            String?              @unique @db.VarChar(255)
+    naverId             String?              @unique @db.VarChar(255)
     deleted             Boolean              @default(false)
     lastLoginAt         DateTime?
     createdAt           DateTime             @default(now())

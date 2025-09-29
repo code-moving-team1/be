@@ -2,11 +2,15 @@ import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 
 interface AuthenticatedRequest extends Request {
-  user?: { id: number };
+  user?: {
+    id: number;
+    userType?: "CUSTOMER" | "MOVER";
+    userPlatform?: "NORMAL" | "GOOGLE" | "NAVER" | "KAKAO";
+  };
 }
 
 export async function verifyAuth(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) {
@@ -15,8 +19,12 @@ export async function verifyAuth(
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
       id: number;
+      userType?: "CUSTOMER" | "MOVER";
     };
-    req.user = { id: decoded.id };
+    req.user = {
+      id: decoded.id,
+      userType: decoded.userType,
+    };
     next();
   } catch {
     res.status(403).json({ error: "유효하지 않은 토큰입니다." });
