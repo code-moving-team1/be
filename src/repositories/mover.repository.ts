@@ -1,17 +1,16 @@
 import { prisma } from "../lib/prisma";
 import { Region, ServiceType, UserPlatform, type Prisma } from "@prisma/client";
+import { createError } from "../utils/HttpError";
 
 // 정렬 옵션 타입 정의
 export type SortOption = "reviews" | "rating" | "career" | "quotes";
 
-// 검색 필터 타입 정의
-export interface MoverListFilters {
-  regions?: Region[];
-  serviceTypes?: ServiceType[];
+export type MoverListFilters = {
+  region?: Region;
+  serviceType?: ServiceType;
   searchText?: string;
   sortBy?: SortOption;
-  sortOrder?: "asc" | "desc";
-}
+};
 
 export async function findById(id: number) {
   return prisma.mover.findUnique({
@@ -129,101 +128,172 @@ export async function updateLastLoginAt(id: number) {
   });
 }
 
-export async function getList(filters: MoverListFilters = {}) {
-  const {
-    regions,
-    serviceTypes,
-    searchText,
-    sortBy = "reviews",
-    sortOrder = "desc",
-  } = filters;
+export async function getList({
+  region,
+  serviceType,
+  searchText = "",
+  sortBy = "reviews",
+}: MoverListFilters) {
+  // WHERE 조건 동적 생성
+  let whereConditions: string[] = ['m."isActive" = true', "m.deleted = false"];
 
-  // 기본 where 조건
-  const whereClause: Prisma.MoverWhereInput = {
-    isActive: true,
-    deleted: false,
-  };
+  // 지역, 서비스, 검색어 필터
+  region && whereConditions.push(`'${region}' = mr.region`);
+  serviceType && whereConditions.push(`'${serviceType}' = mst."serviceType"`);
+  searchText &&
+    whereConditions.push(
+      `(m.nickname ILIKE '%${searchText}%' OR m.introduction ILIKE '%${searchText}%' OR m.description ILIKE '%${searchText}%')`
+    );
 
-  // 지역 필터 추가
-  if (regions && regions.length > 0) {
-    whereClause.moverRegions = {
-      some: {
-        region: {
-          in: regions,
-        },
-      },
-    };
+  const whereClause =
+    whereConditions.length > 0 ? "WHERE " + whereConditions.join(" AND ") : "";
+
+  // 정렬 조건
+  function orderBySql(sortBy: string) {
+    switch (sortBy) {
+      case "reviews":
+        return `ORDER BY (
+        SELECT COUNT(*)
+        FROM "Review" r 
+        WHERE r."moverId" = m.id
+      ) DESC`;
+      case "rating":
+        return 'ORDER BY m."averageRating" DESC';
+      case "career":
+        return "ORDER BY m.career DESC";
+      case "quotes":
+        return `ORDER BY (
+        SELECT COUNT(*) 
+        FROM "Quote" q 
+        WHERE q."moverId" = m.id AND q.status = 'ACCEPTED'
+      ) DESC`;
+      default:
+        return createError("REQUEST/VALIDATION");
+    }
   }
 
-  // 서비스 타입 필터 추가
-  if (serviceTypes && serviceTypes.length > 0) {
-    whereClause.moverServiceTypes = {
-      some: {
-        serviceType: {
-          in: serviceTypes,
-        },
-      },
-    };
-  }
+  const orderBy = orderBySql(sortBy);
 
-  // 검색어 필터 추가 (닉네임, 소개, 설명에서 검색)
-  if (searchText) {
-    whereClause.OR = [
-      { nickname: { contains: searchText, mode: "insensitive" } },
-      { introduction: { contains: searchText, mode: "insensitive" } },
-      { description: { contains: searchText, mode: "insensitive" } },
-    ];
-  }
+  const query = `
+    SELECT 
+      m.id,
+      m.img,
+      m.nickname,
+      m.career,
+      m.introduction,
+      m.description,
+      m."averageRating",
+      ARRAY_AGG(DISTINCT mr.region) FILTER (WHERE mr.region IS NOT NULL) as regions,
+      ARRAY_AGG(DISTINCT mst."serviceType") FILTER (WHERE mst."serviceType" IS NOT NULL) as service_types,
+      (
+        SELECT COUNT(*) 
+        FROM "Quote" q 
+        WHERE q."moverId" = m.id AND q.status = 'ACCEPTED'
+      ) as accepted_quotes_count,
+      (
+        SELECT COUNT(*) 
+        FROM "Review" r 
+        WHERE r."moverId" = m.id
+      ) as reviews_count,
+      (
+        SELECT COUNT(*) 
+        FROM "Likes" l 
+        WHERE l."moverId" = m.id
+      ) as likes_count
+    FROM "Mover" m
+    LEFT JOIN "MoverRegion" mr ON mr."moverId" = m.id
+    LEFT JOIN "MoverServiceType" mst ON mst."moverId" = m.id
+    ${whereClause}
+    GROUP BY m.id
+    ${orderBy}
+  `;
 
-  // 정렬 옵션 설정
-  let orderBy: Prisma.MoverOrderByWithRelationInput = {};
-
-  switch (sortBy) {
-    case "reviews":
-      orderBy = { totalReviews: sortOrder };
-      break;
-    case "rating":
-      orderBy = { averageRating: sortOrder };
-      break;
-    case "career":
-      orderBy = { career: sortOrder };
-      break;
-    case "quotes":
-      orderBy = {
-        quotes: {
-          _count: sortOrder,
-        },
-      };
-      break;
-    default:
-      orderBy = { totalReviews: "desc" };
-  }
-
-  const raw = await prisma.mover.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      img: true,
-      nickname: true,
-      career: true,
-      introduction: true,
-      description: true,
-      averageRating: true,
-      totalReviews: true,
-      moverRegions: { select: { region: true } },
-      moverServiceTypes: { select: { serviceType: true } },
+  const raw: any[] = await prisma.$queryRawUnsafe(query);
+  const result = raw.map((mover: any) => {
+    const {
+      reviews_count,
+      accepted_quotes_count,
+      likes_count,
+      regions,
+      service_types,
+      ...rest
+    } = mover;
+    return {
+      ...rest,
+      moverRegions: regions || [],
+      moverServiceTypes: service_types || [],
       _count: {
-        select: {
-          reviews: true,
-          quotes: { where: { status: "ACCEPTED" } },
-          likes: true,
-        },
+        reviews: Number(mover.reviews_count),
+        quotes: Number(mover.accepted_quotes_count),
+        likes: Number(mover.likes_count),
       },
-    },
-    orderBy,
+    };
   });
 
-  return raw;
+  return result;
+}
+
+export async function getLikesList(customerId: number) {
+  const query = `
+    SELECT 
+      m.id,
+      m.img,
+      m.nickname,
+      m.career,
+      m.introduction,
+      m.description,
+      m."averageRating",
+      ARRAY_AGG(DISTINCT mst."serviceType") FILTER (WHERE mst."serviceType" IS NOT NULL) as service_types,
+      (
+        SELECT COUNT(*) 
+        FROM "Quote" q 
+        WHERE q."moverId" = m.id AND q.status = 'ACCEPTED'
+      ) as accepted_quotes_count,
+      (
+        SELECT COUNT(*) 
+        FROM "Review" r 
+        WHERE r."moverId" = m.id
+      ) as reviews_count,
+      (
+        SELECT COUNT(*) 
+        FROM "Likes" l 
+        WHERE l."moverId" = m.id
+      ) as likes_count,
+      l.createdAt as liked_at
+    FROM "Mover" m
+    INNER JOIN "Likes" l ON l."moverId" = m.id AND l."customerId" = ${customerId}
+    LEFT JOIN "MoverServiceType" mst ON mst."moverId" = m.id
+    WHERE m."isActive" = true AND m.deleted = false
+    GROUP BY m.id
+    ORDER BY l.createdAt DESC
+    LIMIT 3
+  `;
+
+  const raw: any[] = await prisma.$queryRawUnsafe(query);
+
+  const result = raw.map((mover: any) => {
+    const {
+      reviews_count,
+      accepted_quotes_count,
+      likes_count,
+      regions,
+      service_types,
+      liked_at,
+      ...rest
+    } = mover;
+    return {
+      ...rest,
+      moverRegions: regions || [],
+      moverServiceTypes: service_types || [],
+      _count: {
+        reviews: Number(mover.reviews_count),
+        quotes: Number(mover.accepted_quotes_count),
+        likes: Number(mover.likes_count),
+      },
+    };
+  });
+
+  return result;
 }
 
 export default {
@@ -235,4 +305,5 @@ export default {
   update,
   updateLastLoginAt,
   getList,
+  getLikesList,
 };
