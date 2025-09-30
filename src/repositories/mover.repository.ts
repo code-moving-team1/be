@@ -1,6 +1,18 @@
 import { prisma } from "../lib/prisma";
 import { Region, ServiceType, UserPlatform, type Prisma } from "@prisma/client";
 
+// 정렬 옵션 타입 정의
+export type SortOption = "reviews" | "rating" | "career" | "quotes";
+
+// 검색 필터 타입 정의
+export interface MoverListFilters {
+  regions?: Region[];
+  serviceTypes?: ServiceType[];
+  searchText?: string;
+  sortBy?: SortOption;
+  sortOrder?: "asc" | "desc";
+}
+
 export async function findById(id: number) {
   return prisma.mover.findUnique({
     where: {
@@ -117,56 +129,101 @@ export async function updateLastLoginAt(id: number) {
   });
 }
 
-export async function findByRegion(region: string) {
-  return prisma.mover.findMany({
-    where: {
-      moverRegions: {
-        some: {
-          region: region as any, // Region enum으로 변환 필요
+export async function getList(filters: MoverListFilters = {}) {
+  const {
+    regions,
+    serviceTypes,
+    searchText,
+    sortBy = "reviews",
+    sortOrder = "desc",
+  } = filters;
+
+  // 기본 where 조건
+  const whereClause: Prisma.MoverWhereInput = {
+    isActive: true,
+    deleted: false,
+  };
+
+  // 지역 필터 추가
+  if (regions && regions.length > 0) {
+    whereClause.moverRegions = {
+      some: {
+        region: {
+          in: regions,
         },
       },
-      isActive: true,
-      deleted: false,
-    },
-  });
-}
+    };
+  }
 
-export async function findActiveMovers() {
-  return prisma.mover.findMany({
-    where: {
-      isActive: true,
-      deleted: false,
-    },
-  });
-}
-
-export async function findByServiceType(serviceType: string) {
-  return prisma.mover.findMany({
-    where: {
-      moverServiceTypes: {
-        some: {
-          serviceType: serviceType as any, // ServiceType enum으로 변환 필요
+  // 서비스 타입 필터 추가
+  if (serviceTypes && serviceTypes.length > 0) {
+    whereClause.moverServiceTypes = {
+      some: {
+        serviceType: {
+          in: serviceTypes,
         },
       },
-      isActive: true,
-      deleted: false,
-    },
-  });
-}
+    };
+  }
 
-export async function findByRating(minRating: number) {
-  return prisma.mover.findMany({
-    where: {
-      averageRating: {
-        gte: minRating,
+  // 검색어 필터 추가 (닉네임, 소개, 설명에서 검색)
+  if (searchText) {
+    whereClause.OR = [
+      { nickname: { contains: searchText, mode: "insensitive" } },
+      { introduction: { contains: searchText, mode: "insensitive" } },
+      { description: { contains: searchText, mode: "insensitive" } },
+    ];
+  }
+
+  // 정렬 옵션 설정
+  let orderBy: Prisma.MoverOrderByWithRelationInput = {};
+
+  switch (sortBy) {
+    case "reviews":
+      orderBy = { totalReviews: sortOrder };
+      break;
+    case "rating":
+      orderBy = { averageRating: sortOrder };
+      break;
+    case "career":
+      orderBy = { career: sortOrder };
+      break;
+    case "quotes":
+      orderBy = {
+        quotes: {
+          _count: sortOrder,
+        },
+      };
+      break;
+    default:
+      orderBy = { totalReviews: "desc" };
+  }
+
+  const raw = await prisma.mover.findMany({
+    where: whereClause,
+    select: {
+      id: true,
+      img: true,
+      nickname: true,
+      career: true,
+      introduction: true,
+      description: true,
+      averageRating: true,
+      totalReviews: true,
+      moverRegions: { select: { region: true } },
+      moverServiceTypes: { select: { serviceType: true } },
+      _count: {
+        select: {
+          reviews: true,
+          quotes: { where: { status: "ACCEPTED" } },
+          likes: true,
+        },
       },
-      isActive: true,
-      deleted: false,
     },
-    orderBy: {
-      averageRating: "desc",
-    },
+    orderBy,
   });
+
+  return raw;
 }
 
 export default {
@@ -177,8 +234,5 @@ export default {
   create,
   update,
   updateLastLoginAt,
-  findByRegion,
-  findActiveMovers,
-  findByServiceType,
-  findByRating,
+  getList,
 };

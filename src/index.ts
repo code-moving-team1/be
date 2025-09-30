@@ -7,6 +7,7 @@ import passport from "./lib/passport";
 import moveRequestRoutes from "./routes/moveRequest.routes";
 import authRoutes from "./routes/auth.routes";
 import quoteRoutes from "./routes/quote.routes";
+import moverRoutes from "./routes/mover.routes";
 import { createError, HttpError } from "./utils/HttpError";
 import type { ErrorRequestHandler } from "express";
 
@@ -42,6 +43,7 @@ app.use(passport.session());
 app.use("/api/move-requests", moveRequestRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/quote", quoteRoutes);
+app.use("/api/mover", moverRoutes);
 
 // HttpError 기반 전역 에러 핸들러
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
