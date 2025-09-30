@@ -134,19 +134,26 @@ export async function getList({
   searchText = "",
   sortBy = "reviews",
 }: MoverListFilters) {
-  // WHERE 조건 동적 생성
-  let whereConditions: string[] = ['m."isActive" = true', "m.deleted = false"];
+  // WHERE절 생성
+  const searchConditions = searchText
+    ? ` AND (m.nickname ILIKE '%${searchText}%' OR m.introduction ILIKE '%${searchText}%' OR m.description ILIKE '%${searchText}%')`
+    : "";
+  const whereClause =
+    `WHERE m."isActive" = true AND m.deleted = false` + searchConditions;
 
-  // 지역, 서비스, 검색어 필터
-  region && whereConditions.push(`'${region}' = mr.region`);
-  serviceType && whereConditions.push(`'${serviceType}' = mst."serviceType"`);
-  searchText &&
-    whereConditions.push(
-      `(m.nickname ILIKE '%${searchText}%' OR m.introduction ILIKE '%${searchText}%' OR m.description ILIKE '%${searchText}%')`
+  // 그룹화 후 필터 (HAVING 절에서 처리)
+  let havingConditions: string[] = [];
+  region &&
+    havingConditions.push(`'${region}' = ANY(ARRAY_AGG(DISTINCT mr.region))`);
+  serviceType &&
+    havingConditions.push(
+      `'${serviceType}' = ANY(ARRAY_AGG(DISTINCT mst."serviceType"))`
     );
 
-  const whereClause =
-    whereConditions.length > 0 ? "WHERE " + whereConditions.join(" AND ") : "";
+  const havingClause =
+    havingConditions.length > 0
+      ? "HAVING " + havingConditions.join(" AND ")
+      : "";
 
   // 정렬 조건
   function orderBySql(sortBy: string) {
@@ -205,6 +212,7 @@ export async function getList({
     LEFT JOIN "MoverServiceType" mst ON mst."moverId" = m.id
     ${whereClause}
     GROUP BY m.id
+    ${havingClause}
     ${orderBy}
   `;
 
@@ -243,6 +251,7 @@ export async function getLikesList(customerId: number) {
       m.introduction,
       m.description,
       m."averageRating",
+      ARRAY_AGG(DISTINCT mr.region) FILTER (WHERE mr.region IS NOT NULL) as regions,
       ARRAY_AGG(DISTINCT mst."serviceType") FILTER (WHERE mst."serviceType" IS NOT NULL) as service_types,
       (
         SELECT COUNT(*) 
