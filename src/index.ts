@@ -1,8 +1,9 @@
-// src/index.ts
 import express, { NextFunction } from "express";
 import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import session from "express-session";
+import passport from "./lib/passport";
 import moveRequestRoutes from "./routes/moveRequest.routes";
 import authRoutes from "./routes/auth.routes";
 import quoteRoutes from "./routes/quote.routes";
@@ -19,6 +20,23 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
+
+// 세션 설정 (Passport OAuth용)
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 24, // 24시간
+    },
+  })
+);
+
+// Passport 미들웨어 설정 (통합)
+app.use(passport.initialize());
+app.use(passport.session());
 
 //라우터 등록
 app.use("/api/move-requests", moveRequestRoutes);

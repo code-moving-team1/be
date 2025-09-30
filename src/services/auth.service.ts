@@ -3,13 +3,15 @@ import jwt from "jsonwebtoken";
 import * as moverRepo from "../repositories/mover.repository";
 import * as customerRepo from "../repositories/customer.repository";
 import * as refreshRepo from "../repositories/refresh.repository";
-import type { Customer, Mover } from "@prisma/client";
+import { type Customer, type Mover } from "@prisma/client";
 import { createError } from "../utils/HttpError";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 const ACCESS_EXPIRES_IN = "15m";
 const REFRESH_EXPIRES_IN = "7d";
 const SALT_ROUNDS = 10;
+
+type UserType = "CUSTOMER" | "MOVER";
 
 type SignUpDto = {
   email: string;
@@ -34,12 +36,29 @@ type SignUpMoverDto = SignUpDto & {
 type SignInDto = {
   email: string;
   password: string;
-  userType: "CUSTOMER" | "MOVER";
+  userType: UserType;
+};
+
+type GoogleOAuthDto = {
+  googleId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profileImage?: string;
+  userType: UserType;
+};
+
+type NaverOAuthDto = {
+  naverId: string;
+  email: string;
+  nickname: string;
+  profileImage?: string;
+  userType: UserType;
 };
 
 type User = {
   userId: number;
-  userType: "CUSTOMER" | "MOVER";
+  userType: UserType;
 };
 
 type AccessToken = {
@@ -51,22 +70,34 @@ type Tokens = User &
     refreshToken: string;
   };
 
-function generateAccessToken(
-  user: { id: number },
-  userType: "CUSTOMER" | "MOVER"
-) {
+export function generateAccessToken(user: { id: number }, userType: UserType) {
   return jwt.sign({ id: user.id, userType }, JWT_SECRET, {
     expiresIn: ACCESS_EXPIRES_IN,
   });
 }
 
-function generateRefreshToken(
-  user: { id: number },
-  userType: "CUSTOMER" | "MOVER"
-) {
+export function generateRefreshToken(user: { id: number }, userType: UserType) {
   return jwt.sign({ id: user.id, userType }, JWT_SECRET, {
     expiresIn: REFRESH_EXPIRES_IN,
   });
+}
+
+export async function saveTokens(userId: number, userType: UserType) {
+  const user = { id: userId };
+
+  // 토큰 생성
+  const accessToken = generateAccessToken(user, userType);
+  const refreshToken = generateRefreshToken(user, userType);
+
+  // RefreshToken을 별도 테이블에 저장
+  await refreshRepo.createRefreshToken(
+    user.id,
+    userType,
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    refreshToken
+  );
+
+  return { accessToken, refreshToken };
 }
 
 function toSafeUser(user: Mover | Customer) {
@@ -88,10 +119,7 @@ async function validateCommonFields(
 }
 
 // 이메일 중복 확인
-async function checkEmailDuplication(
-  email: string,
-  userType: "CUSTOMER" | "MOVER"
-) {
+async function checkEmailDuplication(email: string, userType: UserType) {
   const existingUser =
     userType === "MOVER"
       ? await moverRepo.findByEmail(email)
@@ -217,17 +245,8 @@ export async function signin({
     throw createError("AUTH/PASSWORD");
   }
 
-  // 토큰 생성
-  const accessToken = generateAccessToken(user, userType);
-  const refreshToken = generateRefreshToken(user, userType);
-
-  // RefreshToken을 별도 테이블에 저장
-  await refreshRepo.createRefreshToken(
-    user.id,
-    userType,
-    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    refreshToken
-  );
+  // 토큰 생성 및 refresh db에 저장
+  const { accessToken, refreshToken } = await saveTokens(user.id, userType);
 
   // 마지막 로그인 시간 업데이트
   if (userType === "MOVER") {
@@ -285,20 +304,168 @@ export async function refresh(
 // ⭕ 4
 export async function logout(
   userId: number,
-  userType: "CUSTOMER" | "MOVER"
+  userType: UserType
 ): Promise<void> {
   // RefreshToken 테이블에서 해당 사용자의 토큰들 무효화
   await refreshRepo.revokeAllByUser(userId, userType);
 }
 
 // ⭕ 5
-export async function getMe(userId: number, userType: "CUSTOMER" | "MOVER") {
+export async function getMe(userId: number, userType: UserType) {
   if (userType === "MOVER") {
     const result = (await moverRepo.findSafeById(userId)) as Mover;
     return toSafeUser(result);
   } else {
     const result = (await customerRepo.findSafeById(userId)) as Customer;
     return toSafeUser(result);
+  }
+}
+
+// ⭕ 6 - Google OAuth
+export async function googleOAuth({
+  googleId,
+  email,
+  firstName,
+  lastName,
+  profileImage,
+  userType,
+}: GoogleOAuthDto) {
+  try {
+    // 기존 사용자 확인 (이메일로)
+    let existingUser: Mover | Customer | null = null;
+
+    if (userType === "MOVER") {
+      existingUser = await moverRepo.findByEmail(email);
+    } else if (userType === "CUSTOMER") {
+      existingUser = await customerRepo.findByEmail(email);
+    } else {
+      throw createError("AUTH/GOOGLE_OAUTH", {
+        messageOverride: "Google OAuth 로그인에 실패했습니다.",
+      });
+    }
+
+    if (existingUser) {
+      if (existingUser.userPlatform === "GOOGLE") {
+        return toSafeUser(existingUser);
+      } else {
+        throw createError("AUTH/ACCOUNT_CONFLICT");
+      }
+    }
+
+    // 새 사용자 생성
+    const fullName = `${firstName} ${lastName}`.trim();
+    const randomPassword = Math.random().toString(36).slice(-8); // 임시 비밀번호
+    const hashedPassword = await hashPassword(randomPassword);
+
+    if (userType === "MOVER") {
+      // Mover 생성 (Google OAuth용 기본값 설정)
+      const mover = await moverRepo.create({
+        email,
+        password: hashedPassword,
+        phone: "00000000000", // 기본값, 나중에 업데이트 필요
+        nickname: fullName, // 기본 닉네임
+        career: "신규", // 기본값
+        introduction: "Google OAuth로 가입한 사용자입니다.", // 기본값
+        description: "Google OAuth로 가입한 사용자입니다.", // 기본값
+        moverRegions: [], // 빈 배열
+        serviceTypes: [], // 빈 배열
+        userPlatform: "GOOGLE",
+        googleId: googleId, // Google ID 저장
+        img: profileImage,
+      } as any);
+
+      return toSafeUser(mover);
+    } else if (userType === "CUSTOMER") {
+      const customer = await customerRepo.create({
+        email,
+        password: hashedPassword,
+        phone: "00000000000", // 기본값, 나중에 업데이트 필요
+        region: "서울", // 기본값, 나중에 업데이트 필요
+        serviceTypes: [], // 빈 배열
+        userPlatform: "GOOGLE",
+        googleId: googleId, // Google ID 저장
+        img: profileImage,
+      } as any);
+
+      return toSafeUser(customer);
+    }
+  } catch (error) {
+    throw createError("AUTH/GOOGLE_OAUTH", {
+      messageOverride: "Google OAuth 로그인에 실패했습니다.",
+    });
+  }
+}
+
+// ⭕ 7 - 네이버 OAuth
+export async function naverOAuth({
+  naverId,
+  email,
+  nickname,
+  profileImage,
+  userType,
+}: NaverOAuthDto) {
+  try {
+    // 기존 사용자 확인 (이메일로)
+    let existingUser: Mover | Customer | null = null;
+
+    if (userType === "MOVER") {
+      existingUser = await moverRepo.findByEmail(email);
+    } else if (userType === "CUSTOMER") {
+      existingUser = await customerRepo.findByEmail(email);
+    } else {
+      throw createError("AUTH/NAVER_OAUTH", {
+        messageOverride: "Naver OAuth 로그인에 실패했습니다.",
+      });
+    }
+
+    if (existingUser) {
+      if (existingUser.userPlatform === "NAVER") {
+        return toSafeUser(existingUser);
+      } else {
+        throw createError("AUTH/ACCOUNT_CONFLICT");
+      }
+    }
+
+    // 새 사용자 생성
+    const randomPassword = Math.random().toString(36).slice(-8); // 임시 비밀번호
+    const hashedPassword = await hashPassword(randomPassword);
+
+    if (userType === "MOVER") {
+      // Mover 생성 (Naver OAuth용 기본값 설정)
+      const mover = await moverRepo.create({
+        email,
+        password: hashedPassword,
+        phone: "00000000000", // 기본값, 나중에 업데이트 필요
+        nickname: nickname, // Naver 닉네임 사용
+        career: "신규", // 기본값
+        introduction: "Naver OAuth로 가입한 사용자입니다.", // 기본값
+        description: "Naver OAuth로 가입한 사용자입니다.", // 기본값
+        moverRegions: [], // 빈 배열
+        serviceTypes: [], // 빈 배열
+        userPlatform: "NAVER",
+        naverId: naverId, // Naver ID 저장
+        img: profileImage,
+      } as any);
+
+      return toSafeUser(mover);
+    } else if (userType === "CUSTOMER") {
+      const customer = await customerRepo.create({
+        email,
+        password: hashedPassword,
+        phone: "00000000000", // 기본값, 나중에 업데이트 필요
+        region: "서울", // 기본값, 나중에 업데이트 필요
+        serviceTypes: [], // 빈 배열
+        userPlatform: "NAVER",
+        naverId: naverId, // Naver ID 저장
+        img: profileImage,
+      } as any);
+
+      return toSafeUser(customer);
+    }
+  } catch (error) {
+    throw createError("AUTH/NAVER_OAUTH", {
+      messageOverride: "Naver OAuth 로그인에 실패했습니다.",
+    });
   }
 }
 
@@ -309,4 +476,6 @@ export default {
   refresh,
   logout,
   getMe,
+  googleOAuth,
+  naverOAuth,
 };

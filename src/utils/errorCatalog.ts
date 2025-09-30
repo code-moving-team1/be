@@ -3,6 +3,9 @@ export type ErrorCode =
   | "AUTH/EMAIL"
   | "AUTH/PASSWORD"
   | "AUTH/UNAUTHORIZED"
+  | "AUTH/GOOGLE_OAUTH"
+  | "AUTH/ACCOUNT_CONFLICT"
+  | "AUTH/NAVER_OAUTH"
   | "USER/NOT_FOUND"
   | "REQUEST/NOT_FOUND"
   | "REQUEST/VALIDATION"
@@ -70,6 +73,25 @@ export const ERROR_CATALOG = {
     message: "회원가입 항목에 중복 사항이 있습니다.",
     expose: true,
     logLevel: "info",
+  },
+  "AUTH/GOOGLE_OAUTH": {
+    status: 500,
+    message: "Google OAuth 인증에 실패했습니다.",
+    expose: true,
+    logLevel: "error",
+  },
+  "AUTH/ACCOUNT_CONFLICT": {
+    status: 409,
+    message:
+      "이미 일반 계정으로 가입된 이메일입니다. 간편 로그인을 사용하려면 기존 계정을 삭제하거나 연동해주세요.",
+    expose: true,
+    logLevel: "warn",
+  },
+  "AUTH/NAVER_OAUTH": {
+    status: 500,
+    message: "네이버 OAuth 인증에 실패했습니다.",
+    expose: true,
+    logLevel: "error",
   },
   "QUOTE/DUPLICATE": {
     status: 409,

@@ -1,6 +1,7 @@
 import express from "express";
-import authService from "../services/auth.service";
+import authService, { saveTokens } from "../services/auth.service";
 import auth from "../middlewares/auth";
+import passport from "../lib/passport";
 
 interface AuthenticatedRequest extends express.Request {
   user?: { id: number };
@@ -66,7 +67,7 @@ moverController.post("/refresh-token", async (req, res, next) => {
 moverController.post(
   "/logout",
   auth.verifyAuth,
-  async (req: AuthenticatedRequest, res, next) => {
+  async (req: any, res, next) => {
     try {
       await authService.logout(req.user!.id, "MOVER");
       res.clearCookie("accessToken");
@@ -79,18 +80,14 @@ moverController.post(
 );
 
 // 5. 내 정보 조회
-moverController.get(
-  "/me",
-  auth.verifyAuth,
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      const mover = await authService.getMe(req.user!.id, "MOVER");
-      res.json(mover);
-    } catch (error) {
-      next(error);
-    }
+moverController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
+  try {
+    const mover = await authService.getMe(req.user!.id, "MOVER");
+    res.json(mover);
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 const customerController = express.Router();
 
@@ -139,7 +136,7 @@ customerController.post("/refresh-token", async (req, res, next) => {
 customerController.post(
   "/logout",
   auth.verifyAuth,
-  async (req: AuthenticatedRequest, res, next) => {
+  async (req: any, res, next) => {
     try {
       await authService.logout(req.user!.id, "CUSTOMER");
       res.clearCookie("accessToken");
@@ -152,13 +149,172 @@ customerController.post(
 );
 
 // 5. 내 정보 조회
+customerController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
+  try {
+    const customer = await authService.getMe(req.user!.id, "CUSTOMER");
+    res.json(customer);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Google OAuth
+moverController.get(
+  "/google",
+  passport.authenticate("google-mover", {
+    scope: ["profile", "email"],
+  })
+);
+
 customerController.get(
-  "/me",
-  auth.verifyAuth,
-  async (req: AuthenticatedRequest, res, next) => {
+  "/google",
+  passport.authenticate("google-customer", {
+    scope: ["profile", "email"],
+  })
+);
+
+// Google OAuth 콜백
+moverController.get(
+  "/google/callback",
+  passport.authenticate("google-mover", { failureRedirect: "/login" }),
+  async (req: any, res, next) => {
     try {
-      const customer = await authService.getMe(req.user!.id, "CUSTOMER");
-      res.json(customer);
+      const user = req.user;
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Google OAuth 인증에 실패했습니다." });
+      }
+
+      // 토큰 생성 및 refresh db에 저장
+      const { accessToken, refreshToken } = await saveTokens(user.id, "MOVER");
+
+      // 쿠키에 토큰 설정
+      setTokenCookie(res, "accessToken", accessToken);
+      setTokenCookie(res, "refreshToken", refreshToken);
+
+      // 성공 시 리다이렉트 (프론트엔드 URL로)
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }/auth/success?type=mover`
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+customerController.get(
+  "/google/callback",
+  passport.authenticate("google-customer", { failureRedirect: "/login" }),
+  async (req: any, res, next) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Google OAuth 인증에 실패했습니다." });
+      }
+
+      // 토큰 생성 및 refresh db에 저장
+      const { accessToken, refreshToken } = await saveTokens(
+        user.id,
+        "CUSTOMER"
+      );
+
+      // 쿠키에 토큰 설정
+      setTokenCookie(res, "accessToken", accessToken);
+      setTokenCookie(res, "refreshToken", refreshToken);
+
+      // 성공 시 리다이렉트 (프론트엔드 URL로)
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }/auth/success?type=customer`
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Naver OAuth 라우트들
+// Naver 로그인 시작
+moverController.get(
+  "/naver",
+  passport.authenticate("naver-mover", {
+    scope: ["profile", "email"],
+  })
+);
+
+customerController.get(
+  "/naver",
+  passport.authenticate("naver-customer", {
+    scope: ["profile", "email"],
+  })
+);
+
+// Naver OAuth 콜백
+moverController.get(
+  "/naver/callback",
+  passport.authenticate("naver-mover", { failureRedirect: "/login" }),
+  async (req: any, res, next) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Naver OAuth 인증에 실패했습니다." });
+      }
+
+      // 토큰 생성 및 refresh db에 저장
+      const { accessToken, refreshToken } = await saveTokens(user.id, "MOVER");
+
+      // 쿠키에 토큰 설정
+      setTokenCookie(res, "accessToken", accessToken);
+      setTokenCookie(res, "refreshToken", refreshToken);
+
+      // 성공 시 리다이렉트 (프론트엔드 URL로)
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }/auth/success?type=mover`
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+customerController.get(
+  "/naver/callback",
+  passport.authenticate("naver-customer", { failureRedirect: "/login" }),
+  async (req: any, res, next) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Naver OAuth 인증에 실패했습니다." });
+      }
+
+      // 토큰 생성 및 refresh db에 저장
+      const { accessToken, refreshToken } = await saveTokens(
+        user.id,
+        "CUSTOMER"
+      );
+
+      // 쿠키에 토큰 설정
+      setTokenCookie(res, "accessToken", accessToken);
+      setTokenCookie(res, "refreshToken", refreshToken);
+
+      // 성공 시 리다이렉트 (프론트엔드 URL로)
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }/auth/success?type=customer`
+      );
     } catch (error) {
       next(error);
     }

@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import type { Prisma, Region, ServiceType } from "@prisma/client";
+import type { Prisma, Region, ServiceType, UserPlatform } from "@prisma/client";
 
 export async function findById(id: number) {
   return prisma.customer.findUnique({
@@ -12,6 +12,15 @@ export async function findById(id: number) {
 
 export async function findByEmail(email: string) {
   return prisma.customer.findUnique({ where: { email, deleted: false } });
+}
+
+export async function findByGoogleId(googleId: string) {
+  return prisma.customer.findFirst({
+    where: {
+      googleId,
+      deleted: false,
+    },
+  });
 }
 
 export async function findSafeById(id: number) {
@@ -34,6 +43,9 @@ export async function create(customer: {
   phone: string;
   region: string;
   serviceTypes: string[];
+  userPlatform?: UserPlatform;
+  googleId?: string;
+  naverId?: string;
   img?: string;
 }) {
   const result = await prisma.customer.create({
@@ -42,6 +54,9 @@ export async function create(customer: {
       password: customer.password,
       phone: customer.phone,
       region: customer.region as Region, // Region enum으로 변환
+      ...(customer.userPlatform ? { userPlatform: customer.userPlatform } : {}),
+      ...(customer.googleId ? { googleId: customer.googleId } : {}),
+      ...(customer.naverId ? { naverId: customer.naverId } : {}),
       ...(customer.img !== undefined ? { img: customer.img } : {}),
     },
   });

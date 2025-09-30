@@ -3,3 +3,5 @@ dist
 .env
 *.log
 src/generated
+GOOGLE_OAUTH_SETUP.md
+oauthTest.http
