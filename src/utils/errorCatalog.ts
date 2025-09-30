@@ -6,6 +6,7 @@ export type ErrorCode =
   | "AUTH/GOOGLE_OAUTH"
   | "AUTH/ACCOUNT_CONFLICT"
   | "AUTH/NAVER_OAUTH"
+  | "AUTH/KAKAO_OAUTH"
   | "USER/NOT_FOUND"
   | "REQUEST/NOT_FOUND"
   | "REQUEST/VALIDATION"
@@ -90,6 +91,12 @@ export const ERROR_CATALOG = {
   "AUTH/NAVER_OAUTH": {
     status: 500,
     message: "네이버 OAuth 인증에 실패했습니다.",
+    expose: true,
+    logLevel: "error",
+  },
+  "AUTH/KAKAO_OAUTH": {
+    status: 500,
+    message: "카카오 OAuth 인증에 실패했습니다.",
     expose: true,
     logLevel: "error",
   },

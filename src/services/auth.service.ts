@@ -56,6 +56,15 @@ type NaverOAuthDto = {
   userType: UserType;
 };
 
+type KakaoOAuthDto = {
+  kakaoId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profileImage?: string;
+  userType: UserType;
+};
+
 type User = {
   userId: number;
   userType: UserType;
@@ -469,6 +478,81 @@ export async function naverOAuth({
   }
 }
 
+// ⭕ 8 - 카카오 OAuth
+export async function kakaoOAuth({
+  kakaoId,
+  email,
+  firstName,
+  lastName,
+  profileImage,
+  userType,
+}: KakaoOAuthDto) {
+  try {
+    // 기존 사용자 확인 (이메일로)
+    let existingUser: Mover | Customer | null = null;
+
+    if (userType === "MOVER") {
+      existingUser = await moverRepo.findByEmail(email);
+    } else if (userType === "CUSTOMER") {
+      existingUser = await customerRepo.findByEmail(email);
+    } else {
+      throw createError("AUTH/KAKAO_OAUTH", {
+        messageOverride: "Kakao OAuth 로그인에 실패했습니다.",
+      });
+    }
+
+    if (existingUser) {
+      if (existingUser.userPlatform === "KAKAO") {
+        return toSafeUser(existingUser);
+      } else {
+        throw createError("AUTH/ACCOUNT_CONFLICT");
+      }
+    }
+
+    // 새 사용자 생성
+    const fullName = `${firstName} ${lastName}`.trim();
+    const randomPassword = Math.random().toString(36).slice(-8); // 임시 비밀번호
+    const hashedPassword = await hashPassword(randomPassword);
+
+    if (userType === "MOVER") {
+      // Mover 생성 (Kakao OAuth용 기본값 설정)
+      const mover = await moverRepo.create({
+        email,
+        password: hashedPassword,
+        phone: "00000000000", // 기본값, 나중에 업데이트 필요
+        nickname: fullName, // 기본 닉네임
+        career: "신규", // 기본값
+        introduction: "Kakao OAuth로 가입한 사용자입니다.", // 기본값
+        description: "Kakao OAuth로 가입한 사용자입니다.", // 기본값
+        moverRegions: [], // 빈 배열
+        serviceTypes: [], // 빈 배열
+        userPlatform: "KAKAO",
+        kakaoId: kakaoId, // Kakao ID 저장
+        img: profileImage,
+      } as any);
+
+      return toSafeUser(mover);
+    } else if (userType === "CUSTOMER") {
+      const customer = await customerRepo.create({
+        email,
+        password: hashedPassword,
+        phone: "00000000000", // 기본값, 나중에 업데이트 필요
+        region: "서울", // 기본값, 나중에 업데이트 필요
+        serviceTypes: [], // 빈 배열
+        userPlatform: "KAKAO",
+        kakaoId: kakaoId, // Kakao ID 저장
+        img: profileImage,
+      } as any);
+
+      return toSafeUser(customer);
+    }
+  } catch (error) {
+    throw createError("AUTH/KAKAO_OAUTH", {
+      messageOverride: "Kakao OAuth 로그인에 실패했습니다.",
+    });
+  }
+}
+
 export default {
   signupMover,
   signupCustomer,
@@ -478,4 +562,5 @@ export default {
   getMe,
   googleOAuth,
   naverOAuth,
+  kakaoOAuth,
 };
