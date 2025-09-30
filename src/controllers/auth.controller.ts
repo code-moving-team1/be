@@ -321,4 +321,88 @@ customerController.get(
   }
 );
 
+// Kakao OAuth 라우트들
+// Kakao 로그인 시작
+moverController.get(
+  "/kakao",
+  passport.authenticate("kakao-mover", {
+    scope: ["profile_nickname", "account_email", "profile_image"],
+    prompt: "consent", // 동의 화면 강제 표시
+  })
+);
+
+customerController.get(
+  "/kakao",
+  passport.authenticate("kakao-customer", {
+    scope: ["profile_nickname", "account_email", "profile_image"],
+    prompt: "consent", // 동의 화면 강제 표시
+  })
+);
+
+// Kakao OAuth 콜백
+moverController.get(
+  "/kakao/callback",
+  passport.authenticate("kakao-mover", { failureRedirect: "/login" }),
+  async (req: any, res, next) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Kakao OAuth 인증에 실패했습니다." });
+      }
+
+      // 토큰 생성 및 refresh db에 저장
+      const { accessToken, refreshToken } = await saveTokens(user.id, "MOVER");
+
+      // 쿠키에 토큰 설정
+      setTokenCookie(res, "accessToken", accessToken);
+      setTokenCookie(res, "refreshToken", refreshToken);
+
+      // 성공 시 리다이렉트 (프론트엔드 URL로)
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }/auth/success?type=mover`
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+customerController.get(
+  "/kakao/callback",
+  passport.authenticate("kakao-customer", { failureRedirect: "/login" }),
+  async (req: any, res, next) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: "Kakao OAuth 인증에 실패했습니다." });
+      }
+
+      // 토큰 생성 및 refresh db에 저장
+      const { accessToken, refreshToken } = await saveTokens(
+        user.id,
+        "CUSTOMER"
+      );
+
+      // 쿠키에 토큰 설정
+      setTokenCookie(res, "accessToken", accessToken);
+      setTokenCookie(res, "refreshToken", refreshToken);
+
+      // 성공 시 리다이렉트 (프론트엔드 URL로)
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }/auth/success?type=customer`
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export { moverController, customerController };

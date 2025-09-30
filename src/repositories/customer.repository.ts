@@ -46,6 +46,7 @@ export async function create(customer: {
   userPlatform?: UserPlatform;
   googleId?: string;
   naverId?: string;
+  kakaoId?: string;
   img?: string;
 }) {
   const result = await prisma.customer.create({
@@ -57,6 +58,7 @@ export async function create(customer: {
       ...(customer.userPlatform ? { userPlatform: customer.userPlatform } : {}),
       ...(customer.googleId ? { googleId: customer.googleId } : {}),
       ...(customer.naverId ? { naverId: customer.naverId } : {}),
+      ...(customer.kakaoId ? { kakaoId: customer.kakaoId } : {}),
       ...(customer.img !== undefined ? { img: customer.img } : {}),
     },
   });

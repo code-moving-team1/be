@@ -28,6 +28,9 @@ CREATE TYPE "public"."MoveRequestStatus" AS ENUM ('ACTIVE', 'COMPLETED', 'FINISH
 -- CreateEnum
 CREATE TYPE "public"."UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED', 'DELETED');
 
+-- CreateEnum
+CREATE TYPE "public"."UserPlatform" AS ENUM ('NORMAL', 'GOOGLE', 'NAVER', 'KAKAO');
+
 -- CreateTable
 CREATE TABLE "public"."Customer" (
     "id" SERIAL NOT NULL,
@@ -37,6 +40,10 @@ CREATE TABLE "public"."Customer" (
     "img" VARCHAR(500) NOT NULL DEFAULT '',
     "region" "public"."Region" NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "userPlatform" "public"."UserPlatform" NOT NULL DEFAULT 'NORMAL',
+    "googleId" VARCHAR(255),
+    "naverId" VARCHAR(255),
+    "kakaoId" TEXT,
     "deleted" BOOLEAN NOT NULL DEFAULT false,
     "lastLoginAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -59,6 +66,10 @@ CREATE TABLE "public"."Mover" (
     "averageRating" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     "totalReviews" INTEGER NOT NULL DEFAULT 0,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "userPlatform" "public"."UserPlatform" NOT NULL DEFAULT 'NORMAL',
+    "googleId" VARCHAR(255),
+    "naverId" VARCHAR(255),
+    "kakaoId" TEXT,
     "deleted" BOOLEAN NOT NULL DEFAULT false,
     "lastLoginAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -213,6 +224,15 @@ CREATE TABLE "public"."Notification" (
 CREATE UNIQUE INDEX "Customer_email_key" ON "public"."Customer"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Customer_googleId_key" ON "public"."Customer"("googleId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Customer_naverId_key" ON "public"."Customer"("naverId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Customer_kakaoId_key" ON "public"."Customer"("kakaoId");
+
+-- CreateIndex
 CREATE INDEX "Customer_region_idx" ON "public"."Customer"("region");
 
 -- CreateIndex
@@ -232,6 +252,15 @@ CREATE UNIQUE INDEX "Mover_email_key" ON "public"."Mover"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Mover_nickname_key" ON "public"."Mover"("nickname");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Mover_googleId_key" ON "public"."Mover"("googleId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Mover_naverId_key" ON "public"."Mover"("naverId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Mover_kakaoId_key" ON "public"."Mover"("kakaoId");
 
 -- CreateIndex
 CREATE INDEX "Mover_email_idx" ON "public"."Mover"("email");

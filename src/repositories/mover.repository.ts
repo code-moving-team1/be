@@ -54,6 +54,7 @@ export async function create(mover: {
   userPlatform?: UserPlatform;
   googleId?: string;
   naverId?: string;
+  kakaoId?: string;
   img?: string;
 }) {
   const result = await prisma.mover.create({
@@ -68,6 +69,7 @@ export async function create(mover: {
       ...(mover.userPlatform ? { userPlatform: mover.userPlatform } : {}),
       ...(mover.googleId ? { googleId: mover.googleId } : {}),
       ...(mover.naverId ? { naverId: mover.naverId } : {}),
+      ...(mover.kakaoId ? { kakaoId: mover.kakaoId } : {}),
       ...(mover.img !== undefined ? { img: mover.img } : {}),
     },
   });
