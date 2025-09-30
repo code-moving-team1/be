@@ -59,8 +59,7 @@ type NaverOAuthDto = {
 type KakaoOAuthDto = {
   kakaoId: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  username: string;
   profileImage?: string;
   userType: UserType;
 };
@@ -482,8 +481,7 @@ export async function naverOAuth({
 export async function kakaoOAuth({
   kakaoId,
   email,
-  firstName,
-  lastName,
+  username,
   profileImage,
   userType,
 }: KakaoOAuthDto) {
@@ -509,8 +507,6 @@ export async function kakaoOAuth({
       }
     }
 
-    // 새 사용자 생성
-    const fullName = `${firstName} ${lastName}`.trim();
     const randomPassword = Math.random().toString(36).slice(-8); // 임시 비밀번호
     const hashedPassword = await hashPassword(randomPassword);
 
@@ -520,7 +516,7 @@ export async function kakaoOAuth({
         email,
         password: hashedPassword,
         phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        nickname: fullName, // 기본 닉네임
+        nickname: username, // 기본 닉네임
         career: "신규", // 기본값
         introduction: "Kakao OAuth로 가입한 사용자입니다.", // 기본값
         description: "Kakao OAuth로 가입한 사용자입니다.", // 기본값

@@ -106,6 +106,7 @@ model Customer {
     userPlatform         UserPlatform          @default(NORMAL)
     googleId             String?               @unique @db.VarChar(255)
     naverId              String?               @unique @db.VarChar(255)
+    kakaoId              String?               @unique
     deleted              Boolean               @default(false)
     lastLoginAt          DateTime?
     createdAt            DateTime              @default(now())
@@ -140,6 +141,7 @@ model Mover {
     userPlatform        UserPlatform         @default(NORMAL)
     googleId            String?              @unique @db.VarChar(255)
     naverId             String?              @unique @db.VarChar(255)
+    kakaoId             String?              @unique
     deleted             Boolean              @default(false)
     lastLoginAt         DateTime?
     createdAt           DateTime             @default(now())

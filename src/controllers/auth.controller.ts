@@ -326,14 +326,16 @@ customerController.get(
 moverController.get(
   "/kakao",
   passport.authenticate("kakao-mover", {
-    scope: ["profile", "account_email"],
+    scope: ["profile_nickname", "account_email", "profile_image"],
+    prompt: "consent", // 동의 화면 강제 표시
   })
 );
 
 customerController.get(
   "/kakao",
   passport.authenticate("kakao-customer", {
-    scope: ["profile", "account_email"],
+    scope: ["profile_nickname", "account_email", "profile_image"],
+    prompt: "consent", // 동의 화면 강제 표시
   })
 );
 

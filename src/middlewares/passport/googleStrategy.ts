@@ -14,14 +14,8 @@ export const googleMoverStrategy = new GoogleStrategy(
     callbackURL: "/api/auth/mover/google/callback",
   },
   async (accessToken, refreshToken, profile, done) => {
-    console.log("--google access--");
-    console.log(accessToken);
-    console.log("--google refresh--");
-    console.log(refreshToken);
     try {
       const { id, emails, name, photos } = profile;
-      console.log("--google profile--");
-      console.log(profile);
       const email = emails?.[0]?.value;
       const firstName = name?.givenName || "";
       const lastName = name?.familyName || "";
@@ -57,14 +51,8 @@ export const googleCustomerStrategy = new GoogleStrategy(
     callbackURL: "/api/auth/customer/google/callback",
   },
   async (accessToken, refreshToken, profile, done) => {
-    console.log("--google access--");
-    console.log(accessToken);
-    console.log("--google refresh--");
-    console.log(refreshToken);
     try {
       const { id, emails, name, photos } = profile;
-      console.log("--google profile--");
-      console.log(profile);
       const email = emails?.[0]?.value;
       const firstName = name?.givenName || "";
       const lastName = name?.familyName || "";

@@ -5,6 +5,7 @@ import authService from "../../services/auth.service";
 const baseKakaoOptions = {
   clientID: process.env.KAKAO_CLIENT_ID!,
   clientSecret: process.env.KAKAO_CLIENT_SECRET!,
+  scope: ["profile_nickname", "account_email", "profile_image"],
 };
 
 // Mover용 Kakao Strategy
@@ -14,18 +15,10 @@ export const kakaoMoverStrategy = new KakaoStrategy(
     callbackURL: "/api/auth/mover/kakao/callback",
   },
   async (accessToken, refreshToken, profile, done) => {
-    console.log("--kakao access--");
-    console.log(accessToken);
-    console.log("--kakao refresh--");
-    console.log(refreshToken);
     try {
-      const { id, emails, name, photos } = profile;
-      console.log("--kakao profile--");
-      console.log(profile);
-      const email = emails?.[0]?.value;
-      const firstName = name?.givenName || "";
-      const lastName = name?.familyName || "";
-      const profileImage = photos?.[0]?.value || "";
+      const { id, displayName } = profile;
+      const email = profile._json.kakao_account.email;
+      const profileImage = profile._json.properties.profile_image;
 
       if (!email) {
         return done(
@@ -35,10 +28,9 @@ export const kakaoMoverStrategy = new KakaoStrategy(
       }
 
       const user = await authService.kakaoOAuth({
-        kakaoId: id,
+        kakaoId: String(id),
         email,
-        firstName,
-        lastName,
+        username: displayName,
         profileImage,
         userType: "MOVER",
       });
@@ -57,18 +49,10 @@ export const kakaoCustomerStrategy = new KakaoStrategy(
     callbackURL: "/api/auth/customer/kakao/callback",
   },
   async (accessToken, refreshToken, profile, done) => {
-    console.log("--kakao access--");
-    console.log(accessToken);
-    console.log("--kakao refresh--");
-    console.log(refreshToken);
     try {
-      const { id, emails, name, photos } = profile;
-      console.log("--kakao profile--");
-      console.log(profile);
-      const email = emails?.[0]?.value;
-      const firstName = name?.givenName || "";
-      const lastName = name?.familyName || "";
-      const profileImage = photos?.[0]?.value || "";
+      const { id, displayName } = profile;
+      const email = profile._json.email;
+      const profileImage = profile._json.properties.profile_image;
 
       if (!email) {
         return done(
@@ -78,10 +62,9 @@ export const kakaoCustomerStrategy = new KakaoStrategy(
       }
 
       const user = await authService.kakaoOAuth({
-        kakaoId: id,
+        kakaoId: String(id),
         email,
-        firstName,
-        lastName,
+        username: displayName,
         profileImage,
         userType: "CUSTOMER",
       });
