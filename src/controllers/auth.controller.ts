@@ -3,10 +3,6 @@ import authService, { saveTokens } from "../services/auth.service";
 import auth from "../middlewares/auth";
 import passport from "../lib/passport";
 
-interface AuthenticatedRequest extends express.Request {
-  user?: { id: number };
-}
-
 function setTokenCookie(
   res: express.Response,
   tokenName: string,

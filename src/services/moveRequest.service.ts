@@ -21,7 +21,7 @@ export const handleSearchMoveRequests = async (
   return await moveRequestRepo.searchMoveRequests(filters, moverId);
 };
 
-const getListByCustomer = async (customerId: number, isActive: true) => {
+const getListByCustomer = async (customerId: number, isActive: boolean) => {
   const where = isActive
     ? { customerId, status: MoveRequestStatus.ACTIVE }
     : {

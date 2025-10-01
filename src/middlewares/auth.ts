@@ -2,11 +2,6 @@
 import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 
-interface AuthenticatedRequest extends Request {
-  //우진수정
-  user?: { id: number; userType: "CUSTOMER" | "MOVER" };
-}
-
 export async function verifyAuth(
   req: Request,
   res: Response,
@@ -17,10 +12,8 @@ export async function verifyAuth(
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
       id: number;
-      //우진 수정
       userType?: "CUSTOMER" | "MOVER";
     };
-    //우진수정
     req.user = { id: decoded.id, userType: decoded.userType };
     next();
   } catch {
