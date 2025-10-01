@@ -1,4 +1,5 @@
 // src/services/moveRequest.service.ts
+import { MoveRequestStatus } from "@prisma/client";
 import moveRequestRepo from "../repositories/moveRequest.repository";
 import {
   CreateMoveRequestInput,
@@ -19,8 +20,19 @@ export const handleSearchMoveRequests = async (
   return await moveRequestRepo.searchMoveRequests(filters);
 };
 
-const getListByCustomer = async (customerId: number, isActive: boolean) => {
-  return await moveRequestRepo.getListByCustomer(customerId, isActive);
+const getListByCustomer = async (customerId: number, isActive: true) => {
+  const where = isActive
+    ? { customerId, status: MoveRequestStatus.ACTIVE }
+    : {
+        customerId,
+        status: {
+          in: [MoveRequestStatus.COMPLETED, MoveRequestStatus.FINISHED],
+        },
+      };
+  return prisma?.moveRequest.findMany({
+    where,
+    orderBy: { createdAt: "asc" },
+  });
 };
 
 export default {
