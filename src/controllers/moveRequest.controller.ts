@@ -13,10 +13,8 @@ import moveRequestService, {
 
 const createMoveRequestController = async (req: Request, res: Response) => {
   try {
-    //@any
-    // const customerId = (req as any).user?.id; // 로그인 미들웨어에서 넘어왔다고 가정
+    const customerId = (req as any).user?.id;
 
-    const customerId = 1; //@우진수정 나중에 auth붙으면 하드코딩 삭제 예정
     if (!customerId) {
       return res.status(401).json({ message: "로그인이 필요합니다" });
     }

@@ -7,7 +7,7 @@ import { verifyAuth } from "../middlewares/auth";
 const router = Router();
 
 // POST
-router.post("/", moveRequestController.createMoveRequestController); // 생성
+router.post("/", verifyAuth, moveRequestController.createMoveRequestController); // 생성
 router.post(
   "/search",
   verifyAuth,
