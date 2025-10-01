@@ -23,8 +23,13 @@ const getListByCustomer = async (customerId: number, isActive: boolean) => {
   return await moveRequestRepo.getListByCustomer(customerId, isActive);
 };
 
+const getById = async (id: number) => {
+  return await moveRequestRepo.getMoveRequestById(id);
+};
+
 export default {
   handleCreateMoveRequest,
   handleSearchMoveRequests,
   getListByCustomer,
+  getById,
 };
