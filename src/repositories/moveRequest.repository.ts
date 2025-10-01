@@ -159,6 +159,7 @@ const updateToCompleted = async (id: number) => {
 
 export default {
   createMoveRequest,
+  getMoveRequestById,
   searchMoveRequests,
   getListByCustomer,
   updateToCompleted,
