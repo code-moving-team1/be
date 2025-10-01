@@ -9,17 +9,12 @@ import moveRequestService, {
   handleSearchMoveRequests,
 } from "../services/moveRequest.service";
 
-interface AuthenticatedRequest extends Request {
-  user?: { id: number };
-}
 //추후 에러타입 정의 및 에러 규격화 하겠습니다
 
 const createMoveRequestController = async (req: Request, res: Response) => {
   try {
-    //@any
-    // const customerId = (req as any).user?.id; // 로그인 미들웨어에서 넘어왔다고 가정
+    const customerId = (req as any).user?.id;
 
-    const customerId = 1; //@우진수정 나중에 auth붙으면 하드코딩 삭제 예정
     if (!customerId) {
       return res.status(401).json({ message: "로그인이 필요합니다" });
     }
@@ -49,7 +44,13 @@ const searchMoveRequestsController = async (req: Request, res: Response) => {
     if (!parseResult.success) {
       return res.status(400).json({ errors: parseResult.error.format() }); //@TODO 에러타입
     }
-    const { meta, data } = await handleSearchMoveRequests(parseResult.data);
+    //@TODO 추후 verifyAuth 적용시 req.user사용
+    const user = (req as any).user;
+    const moverId = user?.userType === "MOVER" ? user.id : undefined;
+    const { meta, data } = await handleSearchMoveRequests(
+      parseResult.data,
+      moverId
+    );
 
     return res.status(200).json({ meta, data });
   } catch (error: any) {
@@ -60,11 +61,8 @@ const searchMoveRequestsController = async (req: Request, res: Response) => {
   }
 };
 
-const getActiveListByCustomer = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const customerId = req.user?.id || 0;
+const getActiveListByCustomer = async (req: Request, res: Response) => {
+  const customerId = (req as any).user.id;
   try {
     const result = await moveRequestService.getListByCustomer(customerId, true);
     if (!result) {
@@ -79,11 +77,8 @@ const getActiveListByCustomer = async (
   }
 };
 
-const getClosedListByCustomer = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const customerId = req.user?.id || 0;
+const getClosedListByCustomer = async (req: Request, res: Response) => {
+  const customerId = (req as any).user.id;
   try {
     const result = await moveRequestService.getListByCustomer(
       customerId,

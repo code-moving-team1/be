@@ -26,7 +26,10 @@ export const getMoveRequestById = async (id: number) => {
   });
 };
 
-export const searchMoveRequests = async (filters: SearchMoveRequestsInput) => {
+export const searchMoveRequests = async (
+  filters: SearchMoveRequestsInput,
+  moverId?: number
+) => {
   const { page, pageSize, sort } = filters;
   const where = buildMoveRequestWhere(filters);
 
@@ -40,12 +43,50 @@ export const searchMoveRequests = async (filters: SearchMoveRequestsInput) => {
       skip: (page - 1) * pageSize,
       take: pageSize,
       orderBy: sort ? { [sort.field]: sort.order } : { createdAt: "desc" },
+      // ...(moverId && {
+      //   include: {
+      //     quotes: {
+      //       where: { moverId },
+      //       take: 1,
+      //     },
+      //   },
+      // }),
+
+      // include:moverId
+      // ?{
+      //   quotes:{
+      //     where:{moverId},
+      //     take:1, //본인 견적만 하나
+      //   },
+      // }
+      // :null,
+
+      //moverId 가 있으면 해당 무버가 낸 견적 1개만 가져옴
+      // - moverId가 없으면 → 모든 견적(quotes)을 포함시킴
+      include: {
+        quotes: moverId
+          ? {
+              where: { moverId },
+              take: 1,
+            }
+          : true,
+      },
     }),
   ]);
 
+  
+  const result = data.map((r) => ({
+    ...r,
+    // ✅ myQuote 필드 추가
+  // - 무버 로그인 상태라면: 해당 무버의 견적 1개만 매핑
+  // - 무버가 아닌 경우: 항상 null
+  // 이렇게 하면 프론트에서는 quotes 배열 대신 myQuote만 확인하면 됨
+    myQuote: moverId ? r.quotes?.[0] ?? null : null,
+  }));
+
   return {
     meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
-    data,
+    data: result,
   };
 };
 

@@ -1,13 +1,6 @@
+// src/middlewares/auth.ts
 import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
-
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: number;
-    userType?: "CUSTOMER" | "MOVER";
-    userPlatform?: "NORMAL" | "GOOGLE" | "NAVER" | "KAKAO";
-  };
-}
 
 export async function verifyAuth(
   req: Request,
@@ -21,10 +14,7 @@ export async function verifyAuth(
       id: number;
       userType?: "CUSTOMER" | "MOVER";
     };
-    req.user = {
-      id: decoded.id,
-      userType: decoded.userType,
-    };
+    req.user = { id: decoded.id, userType: decoded.userType };
     next();
   } catch {
     res.status(403).json({ error: "유효하지 않은 토큰입니다." });
