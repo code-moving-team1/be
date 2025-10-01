@@ -1,5 +1,16 @@
 import { prisma } from "../lib/prisma";
 import { Region, ServiceType, UserPlatform, type Prisma } from "@prisma/client";
+import { createError } from "../utils/HttpError";
+
+// 정렬 옵션 타입 정의
+export type SortOption = "reviews" | "rating" | "career" | "quotes";
+
+export type MoverListFilters = {
+  region?: Region;
+  serviceType?: ServiceType;
+  searchText?: string;
+  sortBy?: SortOption;
+};
 
 export async function findById(id: number) {
   return prisma.mover.findUnique({
@@ -117,56 +128,181 @@ export async function updateLastLoginAt(id: number) {
   });
 }
 
-export async function findByRegion(region: string) {
-  return prisma.mover.findMany({
-    where: {
-      moverRegions: {
-        some: {
-          region: region as any, // Region enum으로 변환 필요
-        },
+export async function getList({
+  region,
+  serviceType,
+  searchText = "",
+  sortBy = "reviews",
+}: MoverListFilters) {
+  // WHERE절 생성
+  const searchConditions = searchText
+    ? ` AND (m.nickname ILIKE '%${searchText}%' OR m.introduction ILIKE '%${searchText}%' OR m.description ILIKE '%${searchText}%')`
+    : "";
+  const whereClause =
+    `WHERE m."isActive" = true AND m.deleted = false` + searchConditions;
+
+  // 그룹화 후 필터 (HAVING 절에서 처리)
+  let havingConditions: string[] = [];
+  region &&
+    havingConditions.push(`'${region}' = ANY(ARRAY_AGG(DISTINCT mr.region))`);
+  serviceType &&
+    havingConditions.push(
+      `'${serviceType}' = ANY(ARRAY_AGG(DISTINCT mst."serviceType"))`
+    );
+
+  const havingClause =
+    havingConditions.length > 0
+      ? "HAVING " + havingConditions.join(" AND ")
+      : "";
+
+  // 정렬 조건
+  function orderBySql(sortBy: string) {
+    switch (sortBy) {
+      case "reviews":
+        return `ORDER BY (
+        SELECT COUNT(*)
+        FROM "Review" r 
+        WHERE r."moverId" = m.id
+      ) DESC`;
+      case "rating":
+        return 'ORDER BY m."averageRating" DESC';
+      case "career":
+        return "ORDER BY m.career DESC";
+      case "quotes":
+        return `ORDER BY (
+        SELECT COUNT(*) 
+        FROM "Quote" q 
+        WHERE q."moverId" = m.id AND q.status = 'ACCEPTED'
+      ) DESC`;
+      default:
+        return createError("REQUEST/VALIDATION");
+    }
+  }
+
+  const orderBy = orderBySql(sortBy);
+
+  const query = `
+    SELECT 
+      m.id,
+      m.img,
+      m.nickname,
+      m.career,
+      m.introduction,
+      m.description,
+      m."averageRating",
+      ARRAY_AGG(DISTINCT mr.region) FILTER (WHERE mr.region IS NOT NULL) as regions,
+      ARRAY_AGG(DISTINCT mst."serviceType") FILTER (WHERE mst."serviceType" IS NOT NULL) as service_types,
+      (
+        SELECT COUNT(*) 
+        FROM "Quote" q 
+        WHERE q."moverId" = m.id AND q.status = 'ACCEPTED'
+      ) as accepted_quotes_count,
+      (
+        SELECT COUNT(*) 
+        FROM "Review" r 
+        WHERE r."moverId" = m.id
+      ) as reviews_count,
+      (
+        SELECT COUNT(*) 
+        FROM "Likes" l 
+        WHERE l."moverId" = m.id
+      ) as likes_count
+    FROM "Mover" m
+    LEFT JOIN "MoverRegion" mr ON mr."moverId" = m.id
+    LEFT JOIN "MoverServiceType" mst ON mst."moverId" = m.id
+    ${whereClause}
+    GROUP BY m.id
+    ${havingClause}
+    ${orderBy}
+  `;
+
+  const raw: any[] = await prisma.$queryRawUnsafe(query);
+  const result = raw.map((mover: any) => {
+    const {
+      reviews_count,
+      accepted_quotes_count,
+      likes_count,
+      regions,
+      service_types,
+      ...rest
+    } = mover;
+    return {
+      ...rest,
+      moverRegions: regions || [],
+      moverServiceTypes: service_types || [],
+      _count: {
+        reviews: Number(mover.reviews_count),
+        quotes: Number(mover.accepted_quotes_count),
+        likes: Number(mover.likes_count),
       },
-      isActive: true,
-      deleted: false,
-    },
+    };
   });
+
+  return result;
 }
 
-export async function findActiveMovers() {
-  return prisma.mover.findMany({
-    where: {
-      isActive: true,
-      deleted: false,
-    },
-  });
-}
+export async function getLikesList(customerId: number) {
+  const query = `
+    SELECT 
+      m.id,
+      m.img,
+      m.nickname,
+      m.career,
+      m.introduction,
+      m.description,
+      m."averageRating",
+      ARRAY_AGG(DISTINCT mr.region) FILTER (WHERE mr.region IS NOT NULL) as regions,
+      ARRAY_AGG(DISTINCT mst."serviceType") FILTER (WHERE mst."serviceType" IS NOT NULL) as service_types,
+      (
+        SELECT COUNT(*) 
+        FROM "Quote" q 
+        WHERE q."moverId" = m.id AND q.status = 'ACCEPTED'
+      ) as accepted_quotes_count,
+      (
+        SELECT COUNT(*) 
+        FROM "Review" r 
+        WHERE r."moverId" = m.id
+      ) as reviews_count,
+      (
+        SELECT COUNT(*) 
+        FROM "Likes" l 
+        WHERE l."moverId" = m.id
+      ) as likes_count,
+      l.createdAt as liked_at
+    FROM "Mover" m
+    INNER JOIN "Likes" l ON l."moverId" = m.id AND l."customerId" = ${customerId}
+    LEFT JOIN "MoverServiceType" mst ON mst."moverId" = m.id
+    WHERE m."isActive" = true AND m.deleted = false
+    GROUP BY m.id
+    ORDER BY l.createdAt DESC
+    LIMIT 3
+  `;
 
-export async function findByServiceType(serviceType: string) {
-  return prisma.mover.findMany({
-    where: {
-      moverServiceTypes: {
-        some: {
-          serviceType: serviceType as any, // ServiceType enum으로 변환 필요
-        },
-      },
-      isActive: true,
-      deleted: false,
-    },
-  });
-}
+  const raw: any[] = await prisma.$queryRawUnsafe(query);
 
-export async function findByRating(minRating: number) {
-  return prisma.mover.findMany({
-    where: {
-      averageRating: {
-        gte: minRating,
+  const result = raw.map((mover: any) => {
+    const {
+      reviews_count,
+      accepted_quotes_count,
+      likes_count,
+      regions,
+      service_types,
+      liked_at,
+      ...rest
+    } = mover;
+    return {
+      ...rest,
+      moverRegions: regions || [],
+      moverServiceTypes: service_types || [],
+      _count: {
+        reviews: Number(mover.reviews_count),
+        quotes: Number(mover.accepted_quotes_count),
+        likes: Number(mover.likes_count),
       },
-      isActive: true,
-      deleted: false,
-    },
-    orderBy: {
-      averageRating: "desc",
-    },
+    };
   });
+
+  return result;
 }
 
 export default {
@@ -177,8 +313,6 @@ export default {
   create,
   update,
   updateLastLoginAt,
-  findByRegion,
-  findActiveMovers,
-  findByServiceType,
-  findByRating,
+  getList,
+  getLikesList,
 };
