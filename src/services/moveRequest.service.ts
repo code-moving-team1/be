@@ -15,9 +15,10 @@ export const handleCreateMoveRequest = async (
 
 //검색해서 그냥 가져오는 로직이라 service가 뭐 없음
 export const handleSearchMoveRequests = async (
-  filters: SearchMoveRequestsInput
+  filters: SearchMoveRequestsInput,
+  moverId?: number
 ) => {
-  return await moveRequestRepo.searchMoveRequests(filters);
+  return await moveRequestRepo.searchMoveRequests(filters, moverId);
 };
 
 const getListByCustomer = async (customerId: number, isActive: true) => {

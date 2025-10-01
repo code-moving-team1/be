@@ -49,7 +49,10 @@ const searchMoveRequestsController = async (req: Request, res: Response) => {
     if (!parseResult.success) {
       return res.status(400).json({ errors: parseResult.error.format() }); //@TODO 에러타입
     }
-    const { meta, data } = await handleSearchMoveRequests(parseResult.data);
+    //@TODO 추후 verifyAuth 적용시 req.user사용
+    const user = (req as any).user;
+    const moverId = user?.userType === "MOVER" ? user.id : undefined;
+    const { meta, data } = await handleSearchMoveRequests(parseResult.data,moverId);
 
     return res.status(200).json({ meta, data });
   } catch (error: any) {

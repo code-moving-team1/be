@@ -8,7 +8,11 @@ const router = Router();
 
 // POST
 router.post("/", moveRequestController.createMoveRequestController); // 생성
-router.post("/search", moveRequestController.searchMoveRequestsController); // Filtering 검색하여 GET
+router.post(
+  "/search",
+  verifyAuth,
+  moveRequestController.searchMoveRequestsController
+); // Filtering 검색하여 GET
 router.get(
   "/customer/active",
   verifyAuth,
