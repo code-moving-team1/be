@@ -9,6 +9,18 @@ const getById = async (id: number) => {
   return result;
 };
 
+const getByMoverAndRequest = async (moverId: number, moveRequestId: number) => {
+  const result = await prisma.directQuoteRequest.findUnique({
+    where: {
+      moveRequestId_moverId: {
+        moveRequestId,
+        moverId,
+      },
+    },
+  });
+  return result;
+};
+
 const create = async (moveRequestId: number, moverId: number) => {
   const result = await prisma.directQuoteRequest.create({
     data: {
@@ -42,6 +54,7 @@ const createRejectedRequest = async (
 
 export default {
   getById,
+  getByMoverAndRequest,
   create,
   update,
   createRejectedRequest,

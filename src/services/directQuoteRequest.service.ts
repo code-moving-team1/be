@@ -14,6 +14,7 @@ const create = async (moveRequestId: number, moverId: number) => {
 
 const updateToAccepted = async (id: number) => {
   const result = await directQuoteRequestRepo.update(id, "ACCEPTED");
+  return result;
 };
 
 const updateToRejected = async (id: number, comment: string) => {
