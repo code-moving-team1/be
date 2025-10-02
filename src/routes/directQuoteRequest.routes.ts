@@ -5,6 +5,10 @@ import { verifyAuth } from "../middlewares/auth";
 const router = Router();
 
 router.post("/", verifyAuth, directQuoteRequestController.create);
-router.patch("/:id/accept", directQuoteRequestController.updateToAccepted);
+router.post(
+  "/:id/rejected",
+  verifyAuth,
+  directQuoteRequestController.updateToRejected
+);
 
 export default router;

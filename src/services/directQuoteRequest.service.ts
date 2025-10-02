@@ -1,5 +1,11 @@
-import id from "zod/v4/locales/id.js";
 import directQuoteRequestRepo from "../repositories/directQuoteRequest.repository";
+import { prisma } from "../lib/prisma";
+import { createError } from "../utils/HttpError";
+
+const getById = async (id: number) => {
+  const result = await directQuoteRequestRepo.getById(id);
+  return result;
+};
 
 const create = async (moveRequestId: number, moverId: number) => {
   const result = await directQuoteRequestRepo.create(moveRequestId, moverId);
@@ -10,10 +16,20 @@ const updateToAccepted = async (id: number) => {
   const result = await directQuoteRequestRepo.update(id, "ACCEPTED");
 };
 
-// @TODO 거절 관련해서 제대로 작성 안 되어 있음. 수정 필요
-const updateToRejected = async (id: number) => {
-  const result = await directQuoteRequestRepo.update(id, "REJECTED");
-  return result;
+const updateToRejected = async (id: number, comment: string) => {
+  // 트랜잭션을 사용하여 모든 작업을 원자적으로 처리
+  // 하나라도 실패하면 모든 작업이 롤백됨
+  try {
+    const result = await prisma.$transaction(async (tx) => [
+      await directQuoteRequestRepo.update(id, "REJECTED"),
+      await directQuoteRequestRepo.createRejectedRequest(comment, id),
+    ]);
+    return result;
+  } catch (error) {
+    throw createError("SERVER/INTERNAL", {
+      messageOverride: "반려 중 트랜잭션 오류로 요청이 취소되었습니다.",
+    });
+  }
 };
 
 const updateToExpired = async (id: number) => {
@@ -22,6 +38,7 @@ const updateToExpired = async (id: number) => {
 };
 
 export default {
+  getById,
   create,
   updateToAccepted,
   updateToRejected,
