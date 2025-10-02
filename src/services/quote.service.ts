@@ -7,6 +7,7 @@ import * as moverRepo from "../repositories/mover.repository";
 import moveRequestRepo, {
   getMoveRequestById,
 } from "../repositories/moveRequest.repository";
+import directQuoteRequestRepo from "../repositories/directQuoteRequest.repository";
 
 // ✅ 문자열/enum을 항상 Prisma Enum으로 정규화
 const normalizeQuoteType = (raw?: string | QuoteType): QuoteType => {
@@ -39,18 +40,18 @@ const submit = async (
   const type = normalizeQuoteType(payload.type as any);
 
   // TODO: DIRECT 타입 견적에 대한 검증 로직 구현 필요
-  // if (type === "DIRECT") {
-  //   const directQuote = await getTestCodeDirectQuoteRequest(
-  //     moveRequestId,
-  //     moverId
-  //   );
-  //   if (!directQuote) {
-  //     throw createError("REQUEST/VALIDATION", {
-  //       messageOverride: "직접 견적 요청이 없거나 유효하지 않습니다.",
-  //       details: { moveRequestId, moverId, type },
-  //     });
-  //   }
-  // }
+  if (type === "DIRECT") {
+    const directQuote = await directQuoteRequestRepo.getByMoverAndRequest(
+      moverId,
+      moveRequestId
+    );
+    if (!directQuote || directQuote?.status !== "PENDING") {
+      throw createError("REQUEST/VALIDATION", {
+        messageOverride: "직접 견적 요청이 없거나 유효하지 않습니다.",
+        details: { moveRequestId, moverId, type },
+      });
+    }
+  }
 
   // 생성 + 에러 매핑
   try {

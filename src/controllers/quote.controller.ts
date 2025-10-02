@@ -101,8 +101,18 @@ const updateAllIfAccepted = async (
   }
 };
 
+const submitIfDirect = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  req.body.type = "DIRECT";
+  next();
+};
+
 export default {
   submit,
   getListByRequest,
   updateAllIfAccepted,
+  submitIfDirect,
 };
