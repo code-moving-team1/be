@@ -23,5 +23,10 @@ router.get(
   verifyAuth,
   moveRequestController.getClosedListByCustomer
 );
+router.get(
+  "/customer/mover/:moverId",
+  verifyAuth,
+  moveRequestController.getListByCustomerWhenDirect
+);
 
 export default router;

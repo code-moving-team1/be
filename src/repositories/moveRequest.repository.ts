@@ -146,6 +146,7 @@ const getListByCustomer = async (customerId: number, isActive = true) => {
     where: { customerId, status: moveStatus },
     orderBy: { createdAt: "asc" },
   });
+
   return result;
 };
 
@@ -157,10 +158,35 @@ const updateToCompleted = async (id: number) => {
   return result;
 };
 
+const getListByCustomerWhenDirect = async (customerId: number, page = 1) => {
+  const raw = await prisma.moveRequest.findMany({
+    where: { customerId, status: "ACTIVE" },
+    orderBy: { createdAt: "asc" },
+    include: { directQuoteRequests: true },
+    take: 5,
+    skip: (page - 1) * 5,
+  });
+
+  const result = raw.map((row) => {
+    const { directQuoteRequests, ...rest } = row;
+    if (directQuoteRequests.length === 0) {
+      return { ...rest, isDirectAlready: false };
+    } else if (directQuoteRequests.length === 1) {
+      return { ...rest, isDirectAlready: true };
+    } else {
+      //TODO 에러처리 필요
+      return;
+    }
+  });
+
+  return result;
+};
+
 export default {
   createMoveRequest,
   getMoveRequestById,
   searchMoveRequests,
   getListByCustomer,
   updateToCompleted,
+  getListByCustomerWhenDirect,
 };

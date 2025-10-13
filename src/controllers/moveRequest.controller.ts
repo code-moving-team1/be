@@ -96,9 +96,28 @@ const getClosedListByCustomer = async (req: Request, res: Response) => {
   }
 };
 
+const getListByCustomerWhenDirect = async (req: Request, res: Response) => {
+  const customerId = (req as any).user?.id;
+  try {
+    const result = await moveRequestService.getListByCustomerWhenDirect(
+      customerId
+    );
+    if (!result) {
+      return res.status(400).json({ error: "리스트 없음" });
+    }
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({
+      message: error.message || "고객 이사 요청 리스트(대기 중) GET 실패",
+    });
+  }
+};
+
 export default {
   createMoveRequestController,
   searchMoveRequestsController,
   getActiveListByCustomer,
   getClosedListByCustomer,
+  getListByCustomerWhenDirect,
 };
