@@ -52,6 +52,7 @@ const getListByRequest = async (moveRequestId: number) => {
       type: true,
       moverId: true,
       createdAt: true,
+      moveRequest: { select: { serviceType: true } },
       mover: {
         select: {
           id: true,
