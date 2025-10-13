@@ -182,6 +182,52 @@ const getListByCustomerWhenDirect = async (customerId: number, page = 1) => {
   return result;
 };
 
+export const getDirectList = async (
+  moverId: number,
+  sort = "move-date",
+  page = 1,
+  pageSize = 4
+) => {
+  const offset = (page - 1) * pageSize;
+  const order =
+    sort === "requested" ? `dr."createdAt" ASC` : `mr."moveDate" ASC`;
+
+  // 전체 개수 조회
+  const totalResult = await prisma.$queryRawUnsafe(
+    `
+      SELECT COUNT(*) as total
+      FROM "MoveRequest" mr
+      INNER JOIN "DirectQuoteRequest" dr ON mr.id = dr."moveRequestId"
+      WHERE dr."moverId" = ${moverId}
+      `
+  );
+  const total = Number((totalResult as any).total);
+
+  const data = await prisma.$queryRawUnsafe(
+    `
+    SELECT 
+      mr.*,
+      c.email as customer_email,
+      c.phone as customer_phone,
+      c.region as customer_region,
+      dr.id as direct_request_id,
+      dr.status as direct_request_status,
+      dr."createdAt" as direct_request_created_at
+    FROM "MoveRequest" mr
+    INNER JOIN "DirectQuoteRequest" dr ON mr.id = dr."moveRequestId"
+    LEFT JOIN "Customer" c ON mr."customerId" = c.id
+    WHERE dr."moverId" = ${moverId}
+    ORDER BY ${order}
+    LIMIT ${pageSize} OFFSET ${offset}
+    `
+  );
+
+  return {
+    meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+    data,
+  };
+};
+
 export default {
   createMoveRequest,
   getMoveRequestById,
@@ -189,4 +235,5 @@ export default {
   getListByCustomer,
   updateToCompleted,
   getListByCustomerWhenDirect,
+  getDirectList,
 };

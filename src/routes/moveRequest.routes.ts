@@ -28,5 +28,6 @@ router.get(
   verifyAuth,
   moveRequestController.getListByCustomerWhenDirect
 );
+router.get("/direct", verifyAuth, moveRequestController.getDirectList);
 
 export default router;

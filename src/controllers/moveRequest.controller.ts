@@ -1,5 +1,5 @@
 // src/controllers/moveRequest.controller.ts
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import {
   createMoveRequestSchema,
   searchMoveRequestsSchema,
@@ -62,7 +62,7 @@ const searchMoveRequestsController = async (req: Request, res: Response) => {
 };
 
 const getActiveListByCustomer = async (req: Request, res: Response) => {
-  const customerId = (req as any).user.id;
+  const customerId = (req as any).user?.id || 0;
   try {
     const result = await moveRequestService.getListByCustomer(customerId, true);
     if (!result) {
@@ -78,7 +78,7 @@ const getActiveListByCustomer = async (req: Request, res: Response) => {
 };
 
 const getClosedListByCustomer = async (req: Request, res: Response) => {
-  const customerId = (req as any).user.id;
+  const customerId = (req as any).user?.id || 0;
   try {
     const result = await moveRequestService.getListByCustomer(
       customerId,
@@ -114,10 +114,32 @@ const getListByCustomerWhenDirect = async (req: Request, res: Response) => {
   }
 };
 
+const getDirectList = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const moverId = Number((req as any).user?.id);
+    const { page, pageSize, sort } = (req as any).query;
+
+    const { meta, data } = await moveRequestService.getDirectList(
+      moverId,
+      page,
+      pageSize,
+      sort
+    );
+    return res.status(200).json({ meta, data });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
 export default {
   createMoveRequestController,
   searchMoveRequestsController,
   getActiveListByCustomer,
   getClosedListByCustomer,
   getListByCustomerWhenDirect,
+  getDirectList,
 };
