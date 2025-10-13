@@ -74,13 +74,12 @@ export const searchMoveRequests = async (
     }),
   ]);
 
-  
   const result = data.map((r) => ({
     ...r,
     // ✅ myQuote 필드 추가
-  // - 무버 로그인 상태라면: 해당 무버의 견적 1개만 매핑
-  // - 무버가 아닌 경우: 항상 null
-  // 이렇게 하면 프론트에서는 quotes 배열 대신 myQuote만 확인하면 됨
+    // - 무버 로그인 상태라면: 해당 무버의 견적 1개만 매핑
+    // - 무버가 아닌 경우: 항상 null
+    // 이렇게 하면 프론트에서는 quotes 배열 대신 myQuote만 확인하면 됨
     myQuote: moverId ? r.quotes?.[0] ?? null : null,
   }));
 
@@ -158,11 +157,19 @@ const updateToCompleted = async (id: number) => {
   return result;
 };
 
-const getListByCustomerWhenDirect = async (customerId: number, page = 1) => {
+const getListByCustomerWhenDirect = async (
+  customerId: number,
+  moverId: number,
+  page = 1
+) => {
+  const total = await prisma.moveRequest.count({
+    where: { customerId, status: "ACTIVE" },
+  });
+
   const raw = await prisma.moveRequest.findMany({
     where: { customerId, status: "ACTIVE" },
     orderBy: { createdAt: "asc" },
-    include: { directQuoteRequests: true },
+    include: { directQuoteRequests: { where: { moverId } } },
     take: 5,
     skip: (page - 1) * 5,
   });
@@ -179,7 +186,10 @@ const getListByCustomerWhenDirect = async (customerId: number, page = 1) => {
     }
   });
 
-  return result;
+  return {
+    data: result,
+    meta: { page, pageSize: 5, total, totalPages: Math.ceil(total / 5) },
+  };
 };
 
 export const getDirectList = async (
