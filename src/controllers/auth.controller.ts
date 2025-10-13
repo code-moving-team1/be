@@ -1,3 +1,4 @@
+// src/controllers/auth.controller.ts
 import express from "express";
 import authService, { saveTokens } from "../services/auth.service";
 import auth from "../middlewares/auth";
