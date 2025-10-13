@@ -201,7 +201,7 @@ export const getDirectList = async (
       WHERE dr."moverId" = ${moverId}
       `
   );
-  const total = Number((totalResult as any).total);
+  const total = Number((totalResult as any)[0].total);
 
   const data = await prisma.$queryRawUnsafe(
     `
