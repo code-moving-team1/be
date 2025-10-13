@@ -7,7 +7,9 @@ import { type Customer, type Mover } from "@prisma/client";
 import { createError } from "../utils/HttpError";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
-const ACCESS_EXPIRES_IN = "15m";
+// const ACCESS_EXPIRES_IN = "15m";
+// 우진수정 : 개발환경용 120분으로 설정 배포시에는 15분으로 변경하겠습니다
+const ACCESS_EXPIRES_IN = "120m";
 const REFRESH_EXPIRES_IN = "7d";
 const SALT_ROUNDS = 10;
 
