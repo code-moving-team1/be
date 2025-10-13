@@ -98,9 +98,13 @@ const getClosedListByCustomer = async (req: Request, res: Response) => {
 
 const getListByCustomerWhenDirect = async (req: Request, res: Response) => {
   const customerId = (req as any).user?.id;
+  const page = Number(req.query.page);
+  const moverId = Number(req.params.moverId);
   try {
     const result = await moveRequestService.getListByCustomerWhenDirect(
-      customerId
+      customerId,
+      moverId,
+      page
     );
     if (!result) {
       return res.status(400).json({ error: "리스트 없음" });

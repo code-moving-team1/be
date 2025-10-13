@@ -40,8 +40,16 @@ const getById = async (id: number) => {
   return await moveRequestRepo.getMoveRequestById(id);
 };
 
-const getListByCustomerWhenDirect = async (customerId: number) => {
-  return await moveRequestRepo.getListByCustomerWhenDirect(customerId);
+const getListByCustomerWhenDirect = async (
+  customerId: number,
+  moverId: number,
+  page: number
+) => {
+  return await moveRequestRepo.getListByCustomerWhenDirect(
+    customerId,
+    moverId,
+    page
+  );
 };
 
 const getDirectList = async (
