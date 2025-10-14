@@ -1,3 +1,4 @@
+// src/routes/quote.routes.ts
 import { Router } from "express";
 import quoteController from "../controllers/quote.controller";
 import { verifyAuth } from "../middlewares/auth";
@@ -19,7 +20,7 @@ router.patch("/:id/accept", verifyAuth, quoteController.updateAllIfAccepted);
 
 // 지정 요청에 대해 견적 제출
 router.post(
-  "direct/move-requests/:moveRequestId",
+  "/direct/move-requests/:moveRequestId",
   verifyAuth,
   quoteController.submitIfDirect,
   quoteController.submit

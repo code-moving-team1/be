@@ -1,3 +1,4 @@
+// src/utils/errorCatalog.ts
 export type ErrorCode =
   | "AUTH/VALIDATION"
   | "AUTH/EMAIL"
@@ -12,7 +13,18 @@ export type ErrorCode =
   | "REQUEST/VALIDATION"
   | "AUTH/DUPLICATE"
   | "QUOTE/DUPLICATE"
-  | "SERVER/INTERNAL";
+  | "SERVER/INTERNAL"
+  | "QUOTE/NOT_FOUND"
+  | "QUOTE/NOT_PENDING"
+  | "QUOTE/FORBIDDEN"
+  | "DIRECT/NOT_FOUND"
+  | "DIRECT/NOT_PENDING"
+  | "DIRECT/PRICE_REQUIRED"
+  | "BOOKING/ALREADY_EXISTS"
+  | "BOOKING/NOT_FOUND"
+  | "BOOKING/NOT_COMPLETED"
+  | "REVIEW/DUPLICATE"
+  | "REVIEW/FORBIDDEN";
 
 export type MessageTemplate =
   | string
@@ -111,5 +123,72 @@ export const ERROR_CATALOG = {
     message: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요",
     expose: false,
     logLevel: "error",
+  },
+
+  "QUOTE/NOT_FOUND": {
+    status: 404,
+    message: "견적을 찾을 수 없습니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "QUOTE/NOT_PENDING": {
+    status: 409,
+    message: "해당 견적은 확정 가능한 상태가 아닙니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "QUOTE/FORBIDDEN": {
+    status: 403,
+    message: "해당 견적에 대한 권한이 없습니다.",
+    expose: true,
+    logLevel: "warn",
+  },
+  "DIRECT/NOT_FOUND": {
+    status: 404,
+    message: "지정 견적 요청을 찾을 수 없습니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "DIRECT/NOT_PENDING": {
+    status: 409,
+    message: "해당 지정 견적 요청은 수락 가능한 상태가 아닙니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "DIRECT/PRICE_REQUIRED": {
+    status: 422,
+    message: "지정 요청 수락에는 가격이 필요합니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "BOOKING/ALREADY_EXISTS": {
+    status: 409,
+    message: "이미 해당 요청으로 생성된 예약이 있습니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "BOOKING/NOT_FOUND": {
+    status: 404,
+    message: "예약을 찾을 수 없습니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "BOOKING/NOT_COMPLETED": {
+    status: 409,
+    message: "아직 리뷰를 작성할 수 없는 상태의 예약입니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "REVIEW/DUPLICATE": {
+    status: 409,
+    message: "이미 해당 예약에 대한 리뷰가 존재합니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "REVIEW/FORBIDDEN": {
+    status: 403,
+    message: "해당 예약에 대한 리뷰 작성 권한이 없습니다.",
+    expose: true,
+    logLevel: "warn",
   },
 } as const satisfies Record<ErrorCode, CatalogEntry>;
