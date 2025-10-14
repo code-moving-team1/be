@@ -4,6 +4,8 @@ import { verifyAuth } from "../middlewares/auth";
 
 const router = Router();
 
+router.get("/:id", moverController.getProfile);
 router.get("/", moverController.getList);
 router.get("/likes", verifyAuth, moverController.getLikesList);
+
 export default router;

@@ -305,6 +305,27 @@ export async function getLikesList(customerId: number) {
   return result;
 }
 
+export async function getProfile(id: number) {
+  const result = await prisma.mover.findUnique({
+    where: { id, deleted: false },
+    include: {
+      moverRegions: true,
+      moverServiceTypes: true,
+      reviews: true,
+      _count: {
+        select: {
+          likes: true,
+          reviews: true,
+          quotes: { where: { status: "ACCEPTED" } },
+        },
+      },
+    },
+  });
+
+  const { password, naverId, googleId, kakaoId, ...rest } = result;
+  return rest;
+}
+
 export default {
   findById,
   findByEmail,
@@ -315,4 +336,5 @@ export default {
   updateLastLoginAt,
   getList,
   getLikesList,
+  getProfile,
 };
