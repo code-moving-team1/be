@@ -17,23 +17,15 @@ const SALT_ROUNDS = 10;
 type UserType = "CUSTOMER" | "MOVER";
 
 type SignUpDto = {
+  name: string;
   email: string;
   password: string;
   phone: string;
-  serviceTypes: string[] | [];
   img?: string;
-};
-
-type SignUpCustomerDto = SignUpDto & {
-  region: string;
-};
-
-type SignUpMoverDto = SignUpDto & {
-  nickname: string;
-  career: string;
-  introduction: string;
-  description: string;
-  moverRegions: string[];
+  userPlatform?: string;
+  googleId?: string;
+  naverId?: string;
+  kakaoId?: string;
 };
 
 type SignInDto = {
@@ -42,29 +34,26 @@ type SignInDto = {
   userType: UserType;
 };
 
-type GoogleOAuthDto = {
-  googleId: string;
+type OAuthDto = {
   email: string;
+  profileImage?: string;
+  userType: UserType;
+};
+
+type GoogleOAuthDto = OAuthDto & {
+  googleId: string;
   firstName: string;
   lastName: string;
-  profileImage?: string;
-  userType: UserType;
 };
 
-type NaverOAuthDto = {
+type NaverOAuthDto = OAuthDto & {
   naverId: string;
-  email: string;
   nickname: string;
-  profileImage?: string;
-  userType: UserType;
 };
 
-type KakaoOAuthDto = {
+type KakaoOAuthDto = OAuthDto & {
   kakaoId: string;
-  email: string;
   username: string;
-  profileImage?: string;
-  userType: UserType;
 };
 
 type User = {
@@ -112,19 +101,20 @@ export async function saveTokens(userId: number, userType: UserType) {
 }
 
 function toSafeUser(user: Mover | Customer) {
-  const { password, ...rest } = user;
+  const { password, googleId, naverId, kakaoId, ...rest } = user;
   return rest;
 }
 
 // 공통 검증 로직
-async function validateCommonFields(
-  email: string,
-  password: string,
-  phone: string
-) {
-  if (!email || !password || !phone) {
+async function validateCommonFields({
+  name,
+  email,
+  phone,
+  password,
+}: SignUpDto) {
+  if (!name || !email || !password || !phone) {
     throw createError("AUTH/VALIDATION", {
-      details: { email, password, phone },
+      details: { name, email, password, phone },
     });
   }
 }
@@ -149,86 +139,43 @@ async function hashPassword(password: string) {
 }
 
 // ⭕ 1
-export async function signupMover({
-  email,
-  password,
-  phone,
-  nickname,
-  career,
-  introduction,
-  description,
-  moverRegions,
-  serviceTypes,
-  img,
-}: SignUpMoverDto) {
+export async function signupMover({ name, email, password, phone }: SignUpDto) {
   // 공통 필드 검증
-  await validateCommonFields(email, password, phone);
-
-  // Mover 전용 필드 검증
-  if (!nickname || !career || !introduction || !description) {
-    throw createError("AUTH/VALIDATION", {
-      details: { nickname, career, introduction, description },
-    });
-  }
+  await validateCommonFields({ name, email, phone, password });
 
   // 이메일 중복 확인
   await checkEmailDuplication(email, "MOVER");
 
-  // 닉네임 중복 확인
-  const existingNickname = await moverRepo.findByNickname(nickname);
-  if (existingNickname) {
-    throw createError("AUTH/DUPLICATE", {
-      messageOverride: "이미 사용 중인 닉네임입니다.",
-    });
-  }
-
   const hashed = await hashPassword(password);
   const mover = await moverRepo.create({
+    name,
     email,
     password: hashed,
     phone,
-    nickname,
-    career,
-    introduction,
-    description,
-    moverRegions,
-    serviceTypes,
-    img,
-  } as SignUpMoverDto);
+  });
 
   return toSafeUser(mover);
 }
 
 export async function signupCustomer({
+  name,
   email,
   password,
   phone,
-  region,
-  serviceTypes,
-  img,
-}: SignUpCustomerDto) {
+}: SignUpDto) {
   // 공통 필드 검증
-  await validateCommonFields(email, password, phone);
-
-  // Customer 전용 필드 검증
-  if (!region) {
-    throw createError("AUTH/VALIDATION", {
-      details: { region },
-    });
-  }
+  await validateCommonFields({ name, email, password, phone });
 
   // 이메일 중복 확인
   await checkEmailDuplication(email, "CUSTOMER");
 
   const hashed = await hashPassword(password);
   const customer = await customerRepo.create({
+    name,
     email,
     password: hashed,
     phone,
-    region,
-    serviceTypes,
-    img,
-  } as SignUpCustomerDto);
+  });
 
   return toSafeUser(customer);
 }
@@ -374,29 +321,23 @@ export async function googleOAuth({
         email,
         password: hashedPassword,
         phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        nickname: fullName, // 기본 닉네임
-        career: "신규", // 기본값
-        introduction: "Google OAuth로 가입한 사용자입니다.", // 기본값
-        description: "Google OAuth로 가입한 사용자입니다.", // 기본값
-        moverRegions: [], // 빈 배열
-        serviceTypes: [], // 빈 배열
+        name: fullName,
         userPlatform: "GOOGLE",
         googleId: googleId, // Google ID 저장
-        img: profileImage,
-      } as any);
+        img: profileImage || "",
+      });
 
       return toSafeUser(mover);
     } else if (userType === "CUSTOMER") {
       const customer = await customerRepo.create({
+        name: fullName,
         email,
         password: hashedPassword,
         phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        region: "서울", // 기본값, 나중에 업데이트 필요
-        serviceTypes: [], // 빈 배열
         userPlatform: "GOOGLE",
         googleId: googleId, // Google ID 저장
-        img: profileImage,
-      } as any);
+        img: profileImage || "",
+      });
 
       return toSafeUser(customer);
     }
@@ -447,29 +388,23 @@ export async function naverOAuth({
         email,
         password: hashedPassword,
         phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        nickname: nickname, // Naver 닉네임 사용
-        career: "신규", // 기본값
-        introduction: "Naver OAuth로 가입한 사용자입니다.", // 기본값
-        description: "Naver OAuth로 가입한 사용자입니다.", // 기본값
-        moverRegions: [], // 빈 배열
-        serviceTypes: [], // 빈 배열
+        name: nickname, // Naver 닉네임을 name으로 사용
         userPlatform: "NAVER",
         naverId: naverId, // Naver ID 저장
-        img: profileImage,
-      } as any);
+        img: profileImage || "",
+      });
 
       return toSafeUser(mover);
     } else if (userType === "CUSTOMER") {
       const customer = await customerRepo.create({
+        name: nickname, // Naver 닉네임을 name으로 사용
         email,
         password: hashedPassword,
         phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        region: "서울", // 기본값, 나중에 업데이트 필요
-        serviceTypes: [], // 빈 배열
         userPlatform: "NAVER",
         naverId: naverId, // Naver ID 저장
-        img: profileImage,
-      } as any);
+        img: profileImage || "",
+      });
 
       return toSafeUser(customer);
     }
@@ -519,29 +454,23 @@ export async function kakaoOAuth({
         email,
         password: hashedPassword,
         phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        nickname: username, // 기본 닉네임
-        career: "신규", // 기본값
-        introduction: "Kakao OAuth로 가입한 사용자입니다.", // 기본값
-        description: "Kakao OAuth로 가입한 사용자입니다.", // 기본값
-        moverRegions: [], // 빈 배열
-        serviceTypes: [], // 빈 배열
+        name: username, // 카카오 사용자명을 name으로 사용
         userPlatform: "KAKAO",
         kakaoId: kakaoId, // Kakao ID 저장
-        img: profileImage,
-      } as any);
+        img: profileImage || "",
+      });
 
       return toSafeUser(mover);
     } else if (userType === "CUSTOMER") {
       const customer = await customerRepo.create({
+        name: username, // 카카오 사용자명을 name으로 사용
         email,
         password: hashedPassword,
         phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        region: "서울", // 기본값, 나중에 업데이트 필요
-        serviceTypes: [], // 빈 배열
         userPlatform: "KAKAO",
         kakaoId: kakaoId, // Kakao ID 저장
-        img: profileImage,
-      } as any);
+        img: profileImage || "",
+      });
 
       return toSafeUser(customer);
     }

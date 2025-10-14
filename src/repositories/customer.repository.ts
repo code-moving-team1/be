@@ -14,15 +14,6 @@ export async function findByEmail(email: string) {
   return prisma.customer.findUnique({ where: { email, deleted: false } });
 }
 
-export async function findByGoogleId(googleId: string) {
-  return prisma.customer.findFirst({
-    where: {
-      googleId,
-      deleted: false,
-    },
-  });
-}
-
 export async function findSafeById(id: number) {
   const raw = await prisma.customer.findUnique({
     where: { id: Number(id), deleted: false },
@@ -38,11 +29,10 @@ export async function findSafeById(id: number) {
 }
 
 export async function create(customer: {
+  name: string;
   email: string;
   password: string;
   phone: string;
-  region: string;
-  serviceTypes: string[];
   userPlatform?: UserPlatform;
   googleId?: string;
   naverId?: string;
@@ -51,10 +41,10 @@ export async function create(customer: {
 }) {
   const result = await prisma.customer.create({
     data: {
+      name: customer.name,
       email: customer.email,
       password: customer.password,
       phone: customer.phone,
-      region: customer.region as Region, // Region enum으로 변환
       ...(customer.userPlatform ? { userPlatform: customer.userPlatform } : {}),
       ...(customer.googleId ? { googleId: customer.googleId } : {}),
       ...(customer.naverId ? { naverId: customer.naverId } : {}),
@@ -62,23 +52,15 @@ export async function create(customer: {
       ...(customer.img !== undefined ? { img: customer.img } : {}),
     },
   });
-  const serviceTypeResult = await Promise.all(
-    customer.serviceTypes.map((serviceType) => {
-      return prisma.customerServiceType.create({
-        data: {
-          customerId: result.id,
-          serviceType: serviceType as ServiceType,
-        },
-      });
-    })
-  );
-
-  return {
-    ...result,
-    customerServiceTypes: serviceTypeResult.map(
-      (serviceType) => serviceType.serviceType
-    ),
-  };
+  // const serviceTypeResult = await Promise.all(
+  //   customer.serviceTypes.map((serviceType) => {
+  //     return prisma.customerServiceType.create({
+  //       data: {
+  //         customerId: result.id,
+  //         serviceType: serviceType as ServiceType,
+  //       },
+  //     });
+  return result;
 }
 
 export async function update(id: number, data: Prisma.CustomerUpdateInput) {
