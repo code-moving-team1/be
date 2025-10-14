@@ -1,3 +1,4 @@
+// src/utils/HttpError.ts
 import {
   ERROR_CATALOG,
   type ErrorCode,

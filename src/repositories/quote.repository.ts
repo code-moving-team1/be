@@ -1,5 +1,6 @@
+// src/repositories/quote.repository.ts
 import { prisma } from "../lib/prisma";
-import { QuoteStatus, QuoteType } from "@prisma/client";
+import { QuoteStatus, QuoteType, Prisma } from "@prisma/client";
 
 export type CreateQuoteParams = {
   price: number;
@@ -90,10 +91,34 @@ const updateAllToRejected = async (moveRequestId: number) => {
   return result;
 };
 
+// Booking 생성에 필요한 스냅샷 필드 모음
+const getSnapshotForBooking = async (quoteId: number) => {
+  return prisma.quote.findUnique({
+    where: { id: quoteId },
+    select: {
+      id: true,
+      status: true,
+      type: true,
+      price: true,
+      moverId: true,
+      moveRequestId: true,
+      moveRequest: {
+        select: {
+          id: true,
+          customerId: true,
+          status: true,
+          moveDate: true,
+        },
+      },
+    },
+  });
+};
+
 export default {
   create,
   getById,
   getListByRequest,
   updateToAccepted,
   updateAllToRejected,
+  getSnapshotForBooking,
 };

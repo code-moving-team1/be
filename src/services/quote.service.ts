@@ -1,6 +1,16 @@
-import { Prisma, PrismaPromise, QuoteType } from "@prisma/client";
+// src/services/quote.service.ts
+import {
+  Prisma,
+  PrismaPromise,
+  QuoteType,
+  QuoteStatus,
+  BookingStatus,
+  MoveRequestStatus,
+} from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import quoteRepo from "../repositories/quote.repository";
+
+import bookingRepo from "../repositories/booking.repository";
 import { SubmitQuoteBody } from "../schemas/quote.schema";
 import { createError } from "../utils/HttpError";
 import * as moverRepo from "../repositories/mover.repository";
@@ -8,6 +18,9 @@ import moveRequestRepo, {
   getMoveRequestById,
 } from "../repositories/moveRequest.repository";
 import directQuoteRequestRepo from "../repositories/directQuoteRequest.repository";
+import { acceptAndCreateBookingTx } from "./tx/acceptAndCreateBooking.tx";
+
+type Tx = Prisma.TransactionClient;
 
 // ✅ 문자열/enum을 항상 Prisma Enum으로 정규화
 const normalizeQuoteType = (raw?: string | QuoteType): QuoteType => {
@@ -118,17 +131,38 @@ const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
   // 트랜잭션을 사용하여 모든 작업을 원자적으로 처리
   // 하나라도 실패하면 모든 작업이 롤백됨
   try {
-    const result = await prisma.$transaction(async () => [
-      quoteRepo.updateToAccepted(id),
-      moveRequestRepo.updateToCompleted(moveRequestId),
-      quoteRepo.updateAllToRejected(moveRequestId),
-    ]);
-    return result;
+    return await prisma.$transaction((tx) =>
+      acceptAndCreateBookingTx(tx, id, moveRequestId)
+    );
   } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      // 유니크 충돌 → 이미 다른 경합으로 Booking 생성된 케이스
+      throw createError("BOOKING/ALREADY_EXISTS", { cause: error });
+    }
+    if ((error as any)?.name === "HttpError") throw error;
+
     throw createError("SERVER/INTERNAL", {
       messageOverride: "견적 확정 중 트랜잭션 오류로 요청이 취소되었습니다.",
+      cause: error,
     });
   }
+
+  //@TODO 삭제 예정
+  // try {
+  //   const result = await prisma.$transaction(async () => [
+  //     quoteRepo.updateToAccepted(id),
+  //     moveRequestRepo.updateToCompleted(moveRequestId),
+  //     quoteRepo.updateAllToRejected(moveRequestId),
+  //   ]);
+  //   return result;
+  // } catch (error) {
+  //   throw createError("SERVER/INTERNAL", {
+  //     messageOverride: "견적 확정 중 트랜잭션 오류로 요청이 취소되었습니다.",
+  //   });
+  // }
 };
 
 export default {
