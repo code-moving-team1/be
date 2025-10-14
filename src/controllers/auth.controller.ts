@@ -1,3 +1,4 @@
+// src/controllers/auth.controller.ts
 import express from "express";
 import authService, { saveTokens } from "../services/auth.service";
 import auth from "../middlewares/auth";
@@ -11,7 +12,9 @@ function setTokenCookie(
   res.cookie(tokenName, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    maxAge: 1000 * 60 * 15,
+    // maxAge: 1000 * 60 * 15,
+    // 우진수정 : 개발환경용 120분으로 설정 배포시에는 15분으로 변경하겠습니다
+    maxAge: 1000 * 60 * 120,
     sameSite: "lax",
   });
 }
