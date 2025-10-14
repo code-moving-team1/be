@@ -29,15 +29,6 @@ export async function findByNickname(nickname: string) {
   return prisma.mover.findFirst({ where: { nickname, deleted: false } });
 }
 
-export async function findByGoogleId(googleId: string) {
-  return prisma.mover.findFirst({
-    where: {
-      googleId,
-      deleted: false,
-    },
-  });
-}
-
 export async function findSafeById(id: number) {
   const raw = await prisma.mover.findUnique({
     where: { id: Number(id), deleted: false },
@@ -56,12 +47,7 @@ export async function create(mover: {
   email: string;
   password: string;
   phone: string;
-  nickname: string;
-  career: string;
-  introduction: string;
-  description: string;
-  moverRegions: string[];
-  serviceTypes: string[];
+  name: string;
   userPlatform?: UserPlatform;
   googleId?: string;
   naverId?: string;
@@ -70,13 +56,10 @@ export async function create(mover: {
 }) {
   const result = await prisma.mover.create({
     data: {
+      name: mover.name,
       email: mover.email,
       password: mover.password,
       phone: mover.phone,
-      nickname: mover.nickname,
-      career: mover.career,
-      introduction: mover.introduction,
-      description: mover.description,
       ...(mover.userPlatform ? { userPlatform: mover.userPlatform } : {}),
       ...(mover.googleId ? { googleId: mover.googleId } : {}),
       ...(mover.naverId ? { naverId: mover.naverId } : {}),
@@ -84,32 +67,8 @@ export async function create(mover: {
       ...(mover.img !== undefined ? { img: mover.img } : {}),
     },
   });
-  const regionResult = await Promise.all(
-    mover.moverRegions.map((rawRegion) => {
-      return prisma.moverRegion.create({
-        data: {
-          moverId: result.id,
-          region: rawRegion as Region,
-        },
-      });
-    })
-  );
 
-  const serviceTypeResult = await Promise.all(
-    mover.serviceTypes.map((serviceType) => {
-      return prisma.moverServiceType.create({
-        data: { moverId: result.id, serviceType: serviceType as ServiceType },
-      });
-    })
-  );
-
-  return {
-    ...result,
-    moverRegions: regionResult.map((region) => region.region),
-    moverServiceTypes: serviceTypeResult.map(
-      (serviceType) => serviceType.serviceType
-    ),
-  };
+  return result;
 }
 
 export async function update(id: number, data: Prisma.MoverUpdateInput) {
@@ -321,6 +280,10 @@ export async function getProfile(id: number) {
       },
     },
   });
+
+  if (!result) {
+    throw createError("USER/NOT_FOUND");
+  }
 
   const { password, naverId, googleId, kakaoId, ...rest } = result;
   return rest;
