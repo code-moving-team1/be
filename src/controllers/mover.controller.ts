@@ -1,6 +1,16 @@
 import { NextFunction, Request, Response } from "express";
 import moverService from "../services/mover.service";
 
+const getProfile = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = Number(req.params.id);
+    const result = await moverService.getProfile(id);
+    return res.status(200).json(result);
+  } catch (e) {
+    next(e);
+  }
+};
+
 const getList = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filters = req.query;
@@ -26,6 +36,7 @@ const getLikesList = async (
 };
 
 export default {
+  getProfile,
   getList,
   getLikesList,
 };

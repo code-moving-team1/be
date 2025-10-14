@@ -15,8 +15,14 @@ const getLikesList = async (customerId: number) => {
   return result;
 };
 
+const getProfile = async (id: number) => {
+  const result = await moverRepo.getProfile(id);
+  return result;
+};
+
 export default {
   getById,
   getList,
   getLikesList,
+  getProfile,
 };
