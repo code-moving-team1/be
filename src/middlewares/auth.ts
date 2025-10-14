@@ -24,7 +24,7 @@ export async function verifyAuth(
   const cookieToken = req.cookies.accessToken;
   // const token = req.cookies.accessToken;
 
-  //2순위 Authorization 헤더(Bearer) 에서의 토큰도 허용
+  // Authorization 헤더(Bearer) 에서의 토큰도 허용
   const headerToken = getBearerFromAuthz(req);
   const token = cookieToken ?? headerToken;
 
