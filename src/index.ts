@@ -1,4 +1,3 @@
-// src/index.ts
 import express, { NextFunction } from "express";
 import cors from "cors";
 import morgan from "morgan";

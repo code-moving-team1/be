@@ -1,4 +1,3 @@
-// src/services/auth.service.ts
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import * as moverRepo from "../repositories/mover.repository";

@@ -2,32 +2,12 @@
 import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 
-//(우진수정) 지금은 쿠키에서 토큰 꺼네는것만 있는데
-//헤더에서 쿠키꺼내는 로직도 추가합니다(서버사이드용)
-
-function getBearerFromAuthz(req: Request): string | undefined {
-  // authorization / Authorization 모두 방어
-  const authz = (req.headers["authorization"] ??
-    (req.headers as any)["Authorization"]) as string | undefined;
-
-  if (!authz) return undefined;
-  if (!authz.startsWith("Bearer ")) return undefined;
-  return authz.slice(7).trim();
-}
-
 export async function verifyAuth(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  //1순위 쿠키에서 토큰
-  const cookieToken = req.cookies.accessToken;
-  // const token = req.cookies.accessToken;
-
-  // Authorization 헤더(Bearer) 에서의 토큰도 허용
-  const headerToken = getBearerFromAuthz(req);
-  const token = cookieToken ?? headerToken;
-
+  const token = req.cookies.accessToken;
   if (!token) return res.status(401).json({ error: "인증이 필요합니다." });
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
