@@ -129,9 +129,9 @@ const getDirectList = async (
 
     const { meta, data } = await moveRequestService.getDirectList(
       moverId,
-      page,
-      pageSize,
-      sort
+      (sort as string) || "move-date",
+      Number(page) || 1,
+      Number(pageSize) || 5
     );
     return res.status(200).json({ meta, data });
   } catch (error: any) {
