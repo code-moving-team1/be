@@ -123,3 +123,14 @@ Authorization: Bearer {CUSTOMER_JWT}
 
 ### 6) 확정 이후, 같은 요청의 견적들 상태 확인
 GET http://localhost:3000/quotes/move-requests/{MOVE_REQUEST_ID}
+
+
+### 리뷰작성
+POST http://localhost:3000/reviews/bookings/{BOOKING_ID}
+Content-Type: application/json
+Authorization: Bearer {CUSTOMER_JWT}
+
+{
+  "content": "시간 딱 맞춰 오시고 친절했습니다!",
+  "rating": 5
+}
