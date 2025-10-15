@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.routes";
 import quoteRoutes from "./routes/quote.routes";
 import moverRoutes from "./routes/mover.routes";
 import reviewRoutes from "./routes/review.routes";
+import customerRoutes from "./routes/customer.routes";
 import directQuoteRequestRoutes from "./routes/directQuoteRequest.routes";
 import { createError, HttpError } from "./utils/HttpError";
 import type { ErrorRequestHandler } from "express";
@@ -47,6 +48,7 @@ app.use("/api/move-requests", moveRequestRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/quote", quoteRoutes);
 app.use("/api/mover", moverRoutes);
+app.use("/api/customer", customerRoutes);
 app.use("/api/direct-quote-request", directQuoteRequestRoutes);
 app.use("/reviews", reviewRoutes);
 

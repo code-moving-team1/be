@@ -12,6 +12,17 @@ export type MoverListFilters = {
   sortBy?: SortOption;
 };
 
+export type MoverInitProfile = {
+  id: number;
+  nickname: string;
+  career: string;
+  introduction: string;
+  description: string;
+  regions: Region[];
+  serviceTypes: ServiceType[];
+  img?: string;
+};
+
 export async function findById(id: number) {
   return prisma.mover.findUnique({
     where: {
@@ -49,23 +60,79 @@ export async function create(mover: {
   phone: string;
   name: string;
   userPlatform?: UserPlatform;
-  googleId?: string;
-  naverId?: string;
-  kakaoId?: string;
+  platformId?: string;
   img?: string;
 }) {
+  const platform =
+    mover.userPlatform === "GOOGLE" && mover.platformId
+      ? { userPlatform: mover.userPlatform, googleId: mover.platformId }
+      : mover.userPlatform === "NAVER" && mover.platformId
+      ? { userPlatform: mover.userPlatform, naverId: mover.platformId }
+      : mover.userPlatform === "KAKAO" && mover.platformId
+      ? { userPlatform: mover.userPlatform, kakaoId: mover.platformId }
+      : {};
   const result = await prisma.mover.create({
     data: {
       name: mover.name,
       email: mover.email,
       password: mover.password,
       phone: mover.phone,
-      ...(mover.userPlatform ? { userPlatform: mover.userPlatform } : {}),
-      ...(mover.googleId ? { googleId: mover.googleId } : {}),
-      ...(mover.naverId ? { naverId: mover.naverId } : {}),
-      ...(mover.kakaoId ? { kakaoId: mover.kakaoId } : {}),
+      ...platform,
       ...(mover.img !== undefined ? { img: mover.img } : {}),
     },
+  });
+
+  return result;
+}
+
+export async function updateInitProfile(data: MoverInitProfile) {
+  const {
+    id,
+    nickname,
+    career,
+    introduction,
+    description,
+    regions,
+    serviceTypes,
+    img,
+  } = data;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const result = await tx.mover.update({
+      where: {
+        id,
+      },
+      data: {
+        nickname,
+        career,
+        introduction,
+        description,
+        hasProfile: true,
+        ...(img ? { img } : {}),
+      },
+    });
+    const serviceTypeResult = await Promise.all(
+      serviceTypes.map((serviceType) => {
+        return tx.moverServiceType.create({
+          data: {
+            moverId: result.id,
+            serviceType,
+          },
+        });
+      })
+    );
+    const regionResult = await Promise.all(
+      regions.map((region) => {
+        return tx.moverRegion.create({
+          data: {
+            moverId: result.id,
+            region,
+          },
+        });
+      })
+    );
+
+    return result;
   });
 
   return result;
@@ -295,6 +362,7 @@ export default {
   findByNickname,
   findSafeById,
   create,
+  updateInitProfile,
   update,
   updateLastLoginAt,
   getList,

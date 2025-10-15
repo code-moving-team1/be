@@ -1,4 +1,3 @@
-// src/controllers/auth.controller.ts
 import express from "express";
 import authService, { saveTokens } from "../services/auth.service";
 import auth from "../middlewares/auth";
@@ -19,10 +18,10 @@ function setTokenCookie(
   });
 }
 
-const moverController = express.Router();
+const moverAuthController = express.Router();
 
 // 1. 회원가입
-moverController.post("/signup", async (req, res, next) => {
+moverAuthController.post("/signup", async (req, res, next) => {
   try {
     const mover = await authService.signupMover(req.body);
     res.status(201).json(mover);
@@ -32,7 +31,7 @@ moverController.post("/signup", async (req, res, next) => {
 });
 
 // 2. 로그인
-moverController.post("/signin", async (req, res, next) => {
+moverAuthController.post("/signin", async (req, res, next) => {
   try {
     const { accessToken, refreshToken } = await authService.signin({
       ...req.body,
@@ -48,7 +47,7 @@ moverController.post("/signin", async (req, res, next) => {
 });
 
 // 3. 토큰 갱신
-moverController.post("/refresh-token", async (req, res, next) => {
+moverAuthController.post("/refresh-token", async (req, res, next) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
@@ -63,7 +62,7 @@ moverController.post("/refresh-token", async (req, res, next) => {
 });
 
 // 4. 로그아웃
-moverController.post(
+moverAuthController.post(
   "/logout",
   auth.verifyAuth,
   async (req: any, res, next) => {
@@ -79,7 +78,7 @@ moverController.post(
 );
 
 // 5. 내 정보 조회
-moverController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
+moverAuthController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
   try {
     const mover = await authService.getMe(req.user!.id, "MOVER");
     res.json(mover);
@@ -88,10 +87,10 @@ moverController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
   }
 });
 
-const customerController = express.Router();
+const customerAuthController = express.Router();
 
 // 1. 회원가입
-customerController.post("/signup", async (req, res, next) => {
+customerAuthController.post("/signup", async (req, res, next) => {
   try {
     const customer = await authService.signupCustomer(req.body);
     res.status(201).json(customer);
@@ -101,7 +100,7 @@ customerController.post("/signup", async (req, res, next) => {
 });
 
 // 2. 로그인
-customerController.post("/signin", async (req, res, next) => {
+customerAuthController.post("/signin", async (req, res, next) => {
   try {
     const { accessToken, refreshToken } = await authService.signin({
       ...req.body,
@@ -117,7 +116,7 @@ customerController.post("/signin", async (req, res, next) => {
 });
 
 // 3. 토큰 갱신
-customerController.post("/refresh-token", async (req, res, next) => {
+customerAuthController.post("/refresh-token", async (req, res, next) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
@@ -132,7 +131,7 @@ customerController.post("/refresh-token", async (req, res, next) => {
 });
 
 // 4. 로그아웃
-customerController.post(
+customerAuthController.post(
   "/logout",
   auth.verifyAuth,
   async (req: any, res, next) => {
@@ -148,24 +147,28 @@ customerController.post(
 );
 
 // 5. 내 정보 조회
-customerController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
-  try {
-    const customer = await authService.getMe(req.user!.id, "CUSTOMER");
-    res.json(customer);
-  } catch (error) {
-    next(error);
+customerAuthController.get(
+  "/me",
+  auth.verifyAuth,
+  async (req: any, res, next) => {
+    try {
+      const customer = await authService.getMe(req.user!.id, "CUSTOMER");
+      res.json(customer);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // Google OAuth
-moverController.get(
+moverAuthController.get(
   "/google",
   passport.authenticate("google-mover", {
     scope: ["profile", "email"],
   })
 );
 
-customerController.get(
+customerAuthController.get(
   "/google",
   passport.authenticate("google-customer", {
     scope: ["profile", "email"],
@@ -173,7 +176,7 @@ customerController.get(
 );
 
 // Google OAuth 콜백
-moverController.get(
+moverAuthController.get(
   "/google/callback",
   passport.authenticate("google-mover", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
@@ -204,7 +207,7 @@ moverController.get(
   }
 );
 
-customerController.get(
+customerAuthController.get(
   "/google/callback",
   passport.authenticate("google-customer", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
@@ -240,14 +243,14 @@ customerController.get(
 
 // Naver OAuth 라우트들
 // Naver 로그인 시작
-moverController.get(
+moverAuthController.get(
   "/naver",
   passport.authenticate("naver-mover", {
     scope: ["profile", "email"],
   })
 );
 
-customerController.get(
+customerAuthController.get(
   "/naver",
   passport.authenticate("naver-customer", {
     scope: ["profile", "email"],
@@ -255,7 +258,7 @@ customerController.get(
 );
 
 // Naver OAuth 콜백
-moverController.get(
+moverAuthController.get(
   "/naver/callback",
   passport.authenticate("naver-mover", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
@@ -286,7 +289,7 @@ moverController.get(
   }
 );
 
-customerController.get(
+customerAuthController.get(
   "/naver/callback",
   passport.authenticate("naver-customer", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
@@ -322,7 +325,7 @@ customerController.get(
 
 // Kakao OAuth 라우트들
 // Kakao 로그인 시작
-moverController.get(
+moverAuthController.get(
   "/kakao",
   passport.authenticate("kakao-mover", {
     scope: ["profile_nickname", "account_email", "profile_image"],
@@ -330,7 +333,7 @@ moverController.get(
   })
 );
 
-customerController.get(
+customerAuthController.get(
   "/kakao",
   passport.authenticate("kakao-customer", {
     scope: ["profile_nickname", "account_email", "profile_image"],
@@ -339,7 +342,7 @@ customerController.get(
 );
 
 // Kakao OAuth 콜백
-moverController.get(
+moverAuthController.get(
   "/kakao/callback",
   passport.authenticate("kakao-mover", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
@@ -370,7 +373,7 @@ moverController.get(
   }
 );
 
-customerController.get(
+customerAuthController.get(
   "/kakao/callback",
   passport.authenticate("kakao-customer", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
@@ -404,4 +407,4 @@ customerController.get(
   }
 );
 
-export { moverController, customerController };
+export { moverAuthController, customerAuthController };
