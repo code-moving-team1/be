@@ -12,6 +12,17 @@ export type MoverListFilters = {
   sortBy?: SortOption;
 };
 
+export type MoverInitProfile = {
+  id: number;
+  nickname: string;
+  career: string;
+  introduction: string;
+  description: string;
+  regions: Region[];
+  serviceTypes: ServiceType[];
+  img?: string;
+};
+
 export async function findById(id: number) {
   return prisma.mover.findUnique({
     where: {
@@ -27,15 +38,6 @@ export async function findByEmail(email: string) {
 
 export async function findByNickname(nickname: string) {
   return prisma.mover.findFirst({ where: { nickname, deleted: false } });
-}
-
-export async function findByGoogleId(googleId: string) {
-  return prisma.mover.findFirst({
-    where: {
-      googleId,
-      deleted: false,
-    },
-  });
 }
 
 export async function findSafeById(id: number) {
@@ -56,60 +58,84 @@ export async function create(mover: {
   email: string;
   password: string;
   phone: string;
-  nickname: string;
-  career: string;
-  introduction: string;
-  description: string;
-  moverRegions: string[];
-  serviceTypes: string[];
+  name: string;
   userPlatform?: UserPlatform;
-  googleId?: string;
-  naverId?: string;
-  kakaoId?: string;
+  platformId?: string;
   img?: string;
 }) {
+  const platform =
+    mover.userPlatform === "GOOGLE" && mover.platformId
+      ? { userPlatform: mover.userPlatform, googleId: mover.platformId }
+      : mover.userPlatform === "NAVER" && mover.platformId
+      ? { userPlatform: mover.userPlatform, naverId: mover.platformId }
+      : mover.userPlatform === "KAKAO" && mover.platformId
+      ? { userPlatform: mover.userPlatform, kakaoId: mover.platformId }
+      : {};
   const result = await prisma.mover.create({
     data: {
+      name: mover.name,
       email: mover.email,
       password: mover.password,
       phone: mover.phone,
-      nickname: mover.nickname,
-      career: mover.career,
-      introduction: mover.introduction,
-      description: mover.description,
-      ...(mover.userPlatform ? { userPlatform: mover.userPlatform } : {}),
-      ...(mover.googleId ? { googleId: mover.googleId } : {}),
-      ...(mover.naverId ? { naverId: mover.naverId } : {}),
-      ...(mover.kakaoId ? { kakaoId: mover.kakaoId } : {}),
+      ...platform,
       ...(mover.img !== undefined ? { img: mover.img } : {}),
     },
   });
-  const regionResult = await Promise.all(
-    mover.moverRegions.map((rawRegion) => {
-      return prisma.moverRegion.create({
-        data: {
-          moverId: result.id,
-          region: rawRegion as Region,
-        },
-      });
-    })
-  );
 
-  const serviceTypeResult = await Promise.all(
-    mover.serviceTypes.map((serviceType) => {
-      return prisma.moverServiceType.create({
-        data: { moverId: result.id, serviceType: serviceType as ServiceType },
-      });
-    })
-  );
+  return result;
+}
 
-  return {
-    ...result,
-    moverRegions: regionResult.map((region) => region.region),
-    moverServiceTypes: serviceTypeResult.map(
-      (serviceType) => serviceType.serviceType
-    ),
-  };
+export async function updateInitProfile(data: MoverInitProfile) {
+  const {
+    id,
+    nickname,
+    career,
+    introduction,
+    description,
+    regions,
+    serviceTypes,
+    img,
+  } = data;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const result = await tx.mover.update({
+      where: {
+        id,
+      },
+      data: {
+        nickname,
+        career,
+        introduction,
+        description,
+        hasProfile: true,
+        ...(img ? { img } : {}),
+      },
+    });
+    const serviceTypeResult = await Promise.all(
+      serviceTypes.map((serviceType) => {
+        return tx.moverServiceType.create({
+          data: {
+            moverId: result.id,
+            serviceType,
+          },
+        });
+      })
+    );
+    const regionResult = await Promise.all(
+      regions.map((region) => {
+        return tx.moverRegion.create({
+          data: {
+            moverId: result.id,
+            region,
+          },
+        });
+      })
+    );
+
+    return result;
+  });
+
+  return result;
 }
 
 export async function update(id: number, data: Prisma.MoverUpdateInput) {
@@ -322,6 +348,10 @@ export async function getProfile(id: number) {
     },
   });
 
+  if (!result) {
+    throw createError("USER/NOT_FOUND");
+  }
+
   const { password, naverId, googleId, kakaoId, ...rest } = result;
   return rest;
 }
@@ -332,6 +362,7 @@ export default {
   findByNickname,
   findSafeById,
   create,
+  updateInitProfile,
   update,
   updateLastLoginAt,
   getList,

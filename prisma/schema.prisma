@@ -102,16 +102,18 @@ enum BookingStatus {
 
 model Customer {
   id                   Int                   @id @default(autoincrement())
+  name                 String                @db.VarChar(50)
   email                String                @unique @db.VarChar(255)
   password             String                @db.VarChar(255)
   phone                String                @db.VarChar(20)
-  img                  String                @default("") @db.VarChar(500)
-  region               Region
+  img                  String                @default("")
+  region               Region?
   isActive             Boolean               @default(true)
   userPlatform         UserPlatform          @default(NORMAL)
   googleId             String?               @unique @db.VarChar(255)
   naverId              String?               @unique @db.VarChar(255)
   kakaoId              String?               @unique
+  hasProfile           Boolean               @default(false)
   deleted              Boolean               @default(false)
   lastLoginAt          DateTime?
   createdAt            DateTime              @default(now())
@@ -133,14 +135,15 @@ model Customer {
 
 model Mover {
   id                  Int                  @id @default(autoincrement())
+  name                String               @db.VarChar(50)
   email               String               @unique @db.VarChar(255)
   password            String               @db.VarChar(255)
   phone               String               @db.VarChar(20)
-  img                 String               @default("") @db.VarChar(500)
-  nickname            String               @unique @db.VarChar(50)
-  career              String               @db.VarChar(100)
-  introduction        String               @db.VarChar(1000)
-  description         String               @db.VarChar(2000)
+  img                 String               @default("")
+  nickname            String?              @unique @db.VarChar(50)
+  career              String?              @db.VarChar(100)
+  introduction        String?              @db.VarChar(1000)
+  description         String?              @db.VarChar(2000)
   averageRating       Float                @default(0.0)
   totalReviews        Int                  @default(0)
   isActive            Boolean              @default(true)
@@ -148,6 +151,7 @@ model Mover {
   googleId            String?              @unique @db.VarChar(255)
   naverId             String?              @unique @db.VarChar(255)
   kakaoId             String?              @unique
+  hasProfile          Boolean              @default(false)
   deleted             Boolean              @default(false)
   lastLoginAt         DateTime?
   createdAt           DateTime             @default(now())

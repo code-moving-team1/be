@@ -1,6 +1,7 @@
 // src/middlewares/auth.ts
 import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
+import { createError } from "../utils/HttpError";
 
 //(우진수정) 지금은 쿠키에서 토큰 꺼네는것만 있는데
 //헤더에서 쿠키꺼내는 로직도 추가합니다(서버사이드용)
@@ -28,16 +29,23 @@ export async function verifyAuth(
   const headerToken = getBearerFromAuthz(req);
   const token = cookieToken ?? headerToken;
 
-  if (!token) return res.status(401).json({ error: "인증이 필요합니다." });
+  if (!token) {
+    throw createError("AUTH/UNAUTHORIZED");
+  }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
       id: number;
-      userType?: "CUSTOMER" | "MOVER";
+      userType: "CUSTOMER" | "MOVER";
+      hasProfile: boolean;
     };
-    req.user = { id: decoded.id, userType: decoded.userType };
+    req.user = {
+      id: decoded.id,
+      userType: decoded.userType,
+      hasProfile: decoded.hasProfile,
+    };
     next();
   } catch {
-    res.status(403).json({ error: "유효하지 않은 토큰입니다." });
+    throw createError("AUTH/FORBIDDEN");
   }
 }
 

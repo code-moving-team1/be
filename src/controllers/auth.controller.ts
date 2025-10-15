@@ -1,8 +1,8 @@
-// src/controllers/auth.controller.ts
 import express from "express";
 import authService, { saveTokens } from "../services/auth.service";
 import auth from "../middlewares/auth";
 import passport from "../lib/passport";
+import { createError } from "../utils/HttpError";
 
 function setTokenCookie(
   res: express.Response,
@@ -19,10 +19,10 @@ function setTokenCookie(
   });
 }
 
-const moverController = express.Router();
+const moverAuthController = express.Router();
 
 // 1. 회원가입
-moverController.post("/signup", async (req, res, next) => {
+moverAuthController.post("/signup", async (req, res, next) => {
   try {
     const mover = await authService.signupMover(req.body);
     res.status(201).json(mover);
@@ -32,7 +32,7 @@ moverController.post("/signup", async (req, res, next) => {
 });
 
 // 2. 로그인
-moverController.post("/signin", async (req, res, next) => {
+moverAuthController.post("/signin", async (req, res, next) => {
   try {
     const { accessToken, refreshToken } = await authService.signin({
       ...req.body,
@@ -48,11 +48,13 @@ moverController.post("/signin", async (req, res, next) => {
 });
 
 // 3. 토큰 갱신
-moverController.post("/refresh-token", async (req, res, next) => {
+moverAuthController.post("/refresh-token", async (req, res, next) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
-      return res.status(401).json({ error: "RefreshToken이 필요합니다." });
+      throw createError("AUTH/UNAUTHORIZED", {
+        messageOverride: "유효하지 않은 리프레쉬 토큰입니다.",
+      });
     }
     const { accessToken } = await authService.refresh(refreshToken);
     setTokenCookie(res, "accessToken", accessToken);
@@ -63,7 +65,7 @@ moverController.post("/refresh-token", async (req, res, next) => {
 });
 
 // 4. 로그아웃
-moverController.post(
+moverAuthController.post(
   "/logout",
   auth.verifyAuth,
   async (req: any, res, next) => {
@@ -79,7 +81,7 @@ moverController.post(
 );
 
 // 5. 내 정보 조회
-moverController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
+moverAuthController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
   try {
     const mover = await authService.getMe(req.user!.id, "MOVER");
     res.json(mover);
@@ -88,10 +90,10 @@ moverController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
   }
 });
 
-const customerController = express.Router();
+const customerAuthController = express.Router();
 
 // 1. 회원가입
-customerController.post("/signup", async (req, res, next) => {
+customerAuthController.post("/signup", async (req, res, next) => {
   try {
     const customer = await authService.signupCustomer(req.body);
     res.status(201).json(customer);
@@ -101,7 +103,7 @@ customerController.post("/signup", async (req, res, next) => {
 });
 
 // 2. 로그인
-customerController.post("/signin", async (req, res, next) => {
+customerAuthController.post("/signin", async (req, res, next) => {
   try {
     const { accessToken, refreshToken } = await authService.signin({
       ...req.body,
@@ -117,11 +119,13 @@ customerController.post("/signin", async (req, res, next) => {
 });
 
 // 3. 토큰 갱신
-customerController.post("/refresh-token", async (req, res, next) => {
+customerAuthController.post("/refresh-token", async (req, res, next) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
-      return res.status(401).json({ error: "RefreshToken이 필요합니다." });
+      throw createError("AUTH/UNAUTHORIZED", {
+        messageOverride: "유효하지 않은 리프레쉬 토큰입니다.",
+      });
     }
     const { accessToken } = await authService.refresh(refreshToken);
     setTokenCookie(res, "accessToken", accessToken);
@@ -132,7 +136,7 @@ customerController.post("/refresh-token", async (req, res, next) => {
 });
 
 // 4. 로그아웃
-customerController.post(
+customerAuthController.post(
   "/logout",
   auth.verifyAuth,
   async (req: any, res, next) => {
@@ -148,24 +152,28 @@ customerController.post(
 );
 
 // 5. 내 정보 조회
-customerController.get("/me", auth.verifyAuth, async (req: any, res, next) => {
-  try {
-    const customer = await authService.getMe(req.user!.id, "CUSTOMER");
-    res.json(customer);
-  } catch (error) {
-    next(error);
+customerAuthController.get(
+  "/me",
+  auth.verifyAuth,
+  async (req: any, res, next) => {
+    try {
+      const customer = await authService.getMe(req.user!.id, "CUSTOMER");
+      res.json(customer);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // Google OAuth
-moverController.get(
+moverAuthController.get(
   "/google",
   passport.authenticate("google-mover", {
     scope: ["profile", "email"],
   })
 );
 
-customerController.get(
+customerAuthController.get(
   "/google",
   passport.authenticate("google-customer", {
     scope: ["profile", "email"],
@@ -173,20 +181,24 @@ customerController.get(
 );
 
 // Google OAuth 콜백
-moverController.get(
+moverAuthController.get(
   "/google/callback",
   passport.authenticate("google-mover", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
     try {
       const user = req.user;
       if (!user) {
-        return res
-          .status(401)
-          .json({ error: "Google OAuth 인증에 실패했습니다." });
+        throw createError("AUTH/UNAUTHORIZED", {
+          messageOverride: "Google OAuth 인증에 실패했습니다.",
+        });
       }
 
       // 토큰 생성 및 refresh db에 저장
-      const { accessToken, refreshToken } = await saveTokens(user.id, "MOVER");
+      const { accessToken, refreshToken } = await saveTokens(
+        user.id,
+        "MOVER",
+        user.hasProfile
+      );
 
       // 쿠키에 토큰 설정
       setTokenCookie(res, "accessToken", accessToken);
@@ -204,22 +216,24 @@ moverController.get(
   }
 );
 
-customerController.get(
+customerAuthController.get(
   "/google/callback",
   passport.authenticate("google-customer", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
     try {
       const user = req.user;
       if (!user) {
-        return res
-          .status(401)
-          .json({ error: "Google OAuth 인증에 실패했습니다." });
+        return res;
+        throw createError("AUTH/UNAUTHORIZED", {
+          messageOverride: "Google OAuth 인증에 실패했습니다.",
+        });
       }
 
       // 토큰 생성 및 refresh db에 저장
       const { accessToken, refreshToken } = await saveTokens(
         user.id,
-        "CUSTOMER"
+        "CUSTOMER",
+        user.hasProfile
       );
 
       // 쿠키에 토큰 설정
@@ -240,14 +254,14 @@ customerController.get(
 
 // Naver OAuth 라우트들
 // Naver 로그인 시작
-moverController.get(
+moverAuthController.get(
   "/naver",
   passport.authenticate("naver-mover", {
     scope: ["profile", "email"],
   })
 );
 
-customerController.get(
+customerAuthController.get(
   "/naver",
   passport.authenticate("naver-customer", {
     scope: ["profile", "email"],
@@ -255,20 +269,24 @@ customerController.get(
 );
 
 // Naver OAuth 콜백
-moverController.get(
+moverAuthController.get(
   "/naver/callback",
   passport.authenticate("naver-mover", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
     try {
       const user = req.user;
       if (!user) {
-        return res
-          .status(401)
-          .json({ error: "Naver OAuth 인증에 실패했습니다." });
+        throw createError("AUTH/UNAUTHORIZED", {
+          messageOverride: "Naver OAuth 인증에 실패했습니다.",
+        });
       }
 
       // 토큰 생성 및 refresh db에 저장
-      const { accessToken, refreshToken } = await saveTokens(user.id, "MOVER");
+      const { accessToken, refreshToken } = await saveTokens(
+        user.id,
+        "MOVER",
+        user.hasProfile
+      );
 
       // 쿠키에 토큰 설정
       setTokenCookie(res, "accessToken", accessToken);
@@ -286,22 +304,23 @@ moverController.get(
   }
 );
 
-customerController.get(
+customerAuthController.get(
   "/naver/callback",
   passport.authenticate("naver-customer", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
     try {
       const user = req.user;
       if (!user) {
-        return res
-          .status(401)
-          .json({ error: "Naver OAuth 인증에 실패했습니다." });
+        throw createError("AUTH/UNAUTHORIZED", {
+          messageOverride: "Naver OAuth 인증에 실패했습니다.",
+        });
       }
 
       // 토큰 생성 및 refresh db에 저장
       const { accessToken, refreshToken } = await saveTokens(
         user.id,
-        "CUSTOMER"
+        "CUSTOMER",
+        user.hasProfile
       );
 
       // 쿠키에 토큰 설정
@@ -322,7 +341,7 @@ customerController.get(
 
 // Kakao OAuth 라우트들
 // Kakao 로그인 시작
-moverController.get(
+moverAuthController.get(
   "/kakao",
   passport.authenticate("kakao-mover", {
     scope: ["profile_nickname", "account_email", "profile_image"],
@@ -330,7 +349,7 @@ moverController.get(
   })
 );
 
-customerController.get(
+customerAuthController.get(
   "/kakao",
   passport.authenticate("kakao-customer", {
     scope: ["profile_nickname", "account_email", "profile_image"],
@@ -339,20 +358,24 @@ customerController.get(
 );
 
 // Kakao OAuth 콜백
-moverController.get(
+moverAuthController.get(
   "/kakao/callback",
   passport.authenticate("kakao-mover", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
     try {
       const user = req.user;
       if (!user) {
-        return res
-          .status(401)
-          .json({ error: "Kakao OAuth 인증에 실패했습니다." });
+        throw createError("AUTH/UNAUTHORIZED", {
+          messageOverride: "Kakao OAuth 인증에 실패했습니다.",
+        });
       }
 
       // 토큰 생성 및 refresh db에 저장
-      const { accessToken, refreshToken } = await saveTokens(user.id, "MOVER");
+      const { accessToken, refreshToken } = await saveTokens(
+        user.id,
+        "MOVER",
+        user.hasProfile
+      );
 
       // 쿠키에 토큰 설정
       setTokenCookie(res, "accessToken", accessToken);
@@ -370,22 +393,23 @@ moverController.get(
   }
 );
 
-customerController.get(
+customerAuthController.get(
   "/kakao/callback",
   passport.authenticate("kakao-customer", { failureRedirect: "/login" }),
   async (req: any, res, next) => {
     try {
       const user = req.user;
       if (!user) {
-        return res
-          .status(401)
-          .json({ error: "Kakao OAuth 인증에 실패했습니다." });
+        throw createError("AUTH/UNAUTHORIZED", {
+          messageOverride: "Kakao OAuth 인증에 실패했습니다.",
+        });
       }
 
       // 토큰 생성 및 refresh db에 저장
       const { accessToken, refreshToken } = await saveTokens(
         user.id,
-        "CUSTOMER"
+        "CUSTOMER",
+        user.hasProfile
       );
 
       // 쿠키에 토큰 설정
@@ -404,4 +428,4 @@ customerController.get(
   }
 );
 
-export { moverController, customerController };
+export { moverAuthController, customerAuthController };
