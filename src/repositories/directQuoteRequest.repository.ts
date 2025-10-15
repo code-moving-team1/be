@@ -1,3 +1,4 @@
+// src/repositories/directQuoteRequest.repository.ts
 import { prisma } from "../lib/prisma";
 import type { DirectRequestStatus, Prisma } from "@prisma/client";
 import { createError } from "../utils/HttpError";

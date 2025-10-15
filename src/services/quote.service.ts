@@ -6,6 +6,7 @@ import {
   QuoteStatus,
   BookingStatus,
   MoveRequestStatus,
+  DirectRequestStatus,
 } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import quoteRepo from "../repositories/quote.repository";
@@ -52,6 +53,9 @@ const submit = async (
 
   const type = normalizeQuoteType(payload.type as any);
 
+  let directQuoteReq: { id: number } | null = // 최소 필요한 필드만
+    null;
+
   // TODO: DIRECT 타입 견적에 대한 검증 로직 구현 필요
   if (type === "DIRECT") {
     const directQuote = await directQuoteRequestRepo.getByMoverAndRequest(
@@ -64,6 +68,7 @@ const submit = async (
         details: { moveRequestId, moverId, type },
       });
     }
+    directQuoteReq = { id: directQuote.id };
   }
 
   // 생성 + 에러 매핑
@@ -75,6 +80,23 @@ const submit = async (
       moverId,
       type,
     });
+
+    // ✅ 추가: DIRECT 견적 제출 성공 시 지정요청을 ACCEPTED로 전환
+    if (type === QuoteType.DIRECT && directQuoteReq) {
+      try {
+        await directQuoteRequestRepo.update(
+          directQuoteReq.id,
+          DirectRequestStatus.ACCEPTED // 또는 "ACCEPTED"
+        );
+      } catch (e) {
+        // 여기서 실패해도 견적 자체는 유효하므로 롤백하지 않고 로그만(선택)
+        // 필요 시 P2025 무시 분기 추가 가능
+        console.log(
+          "direct quote 생성 중 directQuoteStatus Accepted로 변경 실패"
+        );
+      }
+    }
+
     return created;
   } catch (error) {
     // Prisma에서 발생한 에러 처리
