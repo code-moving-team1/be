@@ -70,28 +70,38 @@ type Tokens = User &
     refreshToken: string;
   };
 
-export function generateAccessToken(user: { id: number }, userType: UserType) {
-  return jwt.sign({ id: user.id, userType }, JWT_SECRET, {
+export function generateAccessToken(
+  userId: number,
+  userType: UserType,
+  hasProfile: boolean
+) {
+  return jwt.sign({ id: userId, userType, hasProfile }, JWT_SECRET, {
     expiresIn: ACCESS_EXPIRES_IN,
   });
 }
 
-export function generateRefreshToken(user: { id: number }, userType: UserType) {
-  return jwt.sign({ id: user.id, userType }, JWT_SECRET, {
+export function generateRefreshToken(
+  userId: number,
+  userType: UserType,
+  hasProfile: boolean
+) {
+  return jwt.sign({ id: userId, userType, hasProfile }, JWT_SECRET, {
     expiresIn: REFRESH_EXPIRES_IN,
   });
 }
 
-export async function saveTokens(userId: number, userType: UserType) {
-  const user = { id: userId };
-
+export async function saveTokens(
+  userId: number,
+  userType: UserType,
+  hasProfile: boolean
+) {
   // 토큰 생성
-  const accessToken = generateAccessToken(user, userType);
-  const refreshToken = generateRefreshToken(user, userType);
+  const accessToken = generateAccessToken(userId, userType, hasProfile);
+  const refreshToken = generateRefreshToken(userId, userType, hasProfile);
 
   // RefreshToken을 별도 테이블에 저장
   await refreshRepo.createRefreshToken(
-    user.id,
+    userId,
     userType,
     new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     refreshToken
@@ -204,7 +214,11 @@ export async function signin({
   }
 
   // 토큰 생성 및 refresh db에 저장
-  const { accessToken, refreshToken } = await saveTokens(user.id, userType);
+  const { accessToken, refreshToken } = await saveTokens(
+    user.id,
+    userType,
+    user.hasProfile
+  );
 
   // 마지막 로그인 시간 업데이트
   if (userType === "MOVER") {
@@ -229,6 +243,7 @@ export async function refresh(
     const decoded = jwt.verify(refreshToken, JWT_SECRET) as {
       id: number;
       userType: "CUSTOMER" | "MOVER";
+      hasProfile: boolean;
     };
 
     // RefreshToken 테이블에서 검증
@@ -244,8 +259,9 @@ export async function refresh(
     }
 
     const newAccessToken = generateAccessToken(
-      { id: decoded.id },
-      decoded.userType
+      decoded.id,
+      decoded.userType,
+      decoded.hasProfile
     );
     return {
       accessToken: newAccessToken,
