@@ -7,11 +7,11 @@ const updateInitProfile = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id, userType } = (req as any).user;
+  const { id, userType, hasProfile } = (req as any).user;
   const { region, serviceTypes, img } = req.body;
 
-  // 유저 타입이 customer가 아니라면 에러 처리
-  if (userType !== "CUSTOMER") {
+  // 유저 타입이 customer가 아니거나 hasProfile이 이미 true라면 에러 처리
+  if (userType !== "CUSTOMER" || hasProfile) {
     throw createError("AUTH/FORBIDDEN", {
       messageOverride: "해당 요청에 대한 권한이 없습니다.",
     });

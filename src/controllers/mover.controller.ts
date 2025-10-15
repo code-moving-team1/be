@@ -41,10 +41,10 @@ const updateInitProfile = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id, userType } = (req as any).user;
+  const { id, userType, hasProfile } = (req as any).user;
 
-  // 유저 타입이 MOVER가 아니라면 에러 처리
-  if (userType !== "MOVER") {
+  // 유저 타입이 MOVER가 아니거나 hasProfile이 이미 true라면 에러 처리
+  if (userType !== "MOVER" || hasProfile) {
     throw createError("AUTH/FORBIDDEN", {
       messageOverride: "해당 요청에 대한 권한이 없습니다.",
     });
