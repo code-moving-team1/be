@@ -106,7 +106,7 @@ model Customer {
   email                String                @unique @db.VarChar(255)
   password             String                @db.VarChar(255)
   phone                String                @db.VarChar(20)
-  img                  String                @default("") @db.VarChar(500)
+  img                  String                @default("")
   region               Region?
   isActive             Boolean               @default(true)
   userPlatform         UserPlatform          @default(NORMAL)
@@ -139,7 +139,7 @@ model Mover {
   email               String               @unique @db.VarChar(255)
   password            String               @db.VarChar(255)
   phone               String               @db.VarChar(20)
-  img                 String               @default("") @db.VarChar(500)
+  img                 String               @default("")
   nickname            String?              @unique @db.VarChar(50)
   career              String?              @db.VarChar(100)
   introduction        String?              @db.VarChar(1000)
