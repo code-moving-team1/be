@@ -1,4 +1,8 @@
-import moverRepo, { MoverListFilters } from "../repositories/mover.repository";
+import { Region, ServiceType } from "@prisma/client";
+import moverRepo, {
+  MoverInitProfile,
+  MoverListFilters,
+} from "../repositories/mover.repository";
 
 const getById = async (id: number) => {
   const result = await moverRepo.findById(id);
@@ -20,9 +24,15 @@ const getProfile = async (id: number) => {
   return result;
 };
 
+const updateInitProfile = async (data: MoverInitProfile) => {
+  const result = await moverRepo.updateInitProfile(data);
+  return result;
+};
+
 export default {
   getById,
   getList,
   getLikesList,
   getProfile,
+  updateInitProfile,
 };

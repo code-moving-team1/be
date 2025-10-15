@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import * as moverRepo from "../repositories/mover.repository";
 import * as customerRepo from "../repositories/customer.repository";
 import * as refreshRepo from "../repositories/refresh.repository";
-import { type Customer, type Mover } from "@prisma/client";
+import { UserPlatform, type Customer, type Mover } from "@prisma/client";
 import { createError } from "../utils/HttpError";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -279,15 +279,22 @@ export async function getMe(userId: number, userType: UserType) {
   }
 }
 
-// ⭕ 6 - Google OAuth
-export async function googleOAuth({
-  googleId,
+// 공통 OAuth 처리 함수
+async function handleOAuth({
   email,
-  firstName,
-  lastName,
+  name,
   profileImage,
   userType,
-}: GoogleOAuthDto) {
+  platform,
+  platformId,
+}: {
+  email: string;
+  name: string;
+  profileImage?: string | undefined;
+  userType: UserType;
+  platform: UserPlatform;
+  platformId: string;
+}) {
   try {
     // 기존 사용자 확인 (이메일로)
     let existingUser: Mover | Customer | null = null;
@@ -297,13 +304,13 @@ export async function googleOAuth({
     } else if (userType === "CUSTOMER") {
       existingUser = await customerRepo.findByEmail(email);
     } else {
-      throw createError("AUTH/GOOGLE_OAUTH", {
-        messageOverride: "Google OAuth 로그인에 실패했습니다.",
+      throw createError("AUTH/OAUTH", {
+        messageOverride: `${platform} OAuth 로그인에 실패했습니다.`,
       });
     }
 
     if (existingUser) {
-      if (existingUser.userPlatform === "GOOGLE") {
+      if (existingUser.userPlatform === platform) {
         return toSafeUser(existingUser);
       } else {
         throw createError("AUTH/ACCOUNT_CONFLICT");
@@ -311,41 +318,60 @@ export async function googleOAuth({
     }
 
     // 새 사용자 생성
-    const fullName = `${firstName} ${lastName}`.trim();
     const randomPassword = Math.random().toString(36).slice(-8); // 임시 비밀번호
     const hashedPassword = await hashPassword(randomPassword);
 
     if (userType === "MOVER") {
-      // Mover 생성 (Google OAuth용 기본값 설정)
       const mover = await moverRepo.create({
         email,
         password: hashedPassword,
         phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        name: fullName,
-        userPlatform: "GOOGLE",
-        googleId: googleId, // Google ID 저장
+        name,
+        userPlatform: platform,
+        platformId,
         img: profileImage || "",
       });
 
       return toSafeUser(mover);
     } else if (userType === "CUSTOMER") {
       const customer = await customerRepo.create({
-        name: fullName,
+        name,
         email,
         password: hashedPassword,
         phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        userPlatform: "GOOGLE",
-        googleId: googleId, // Google ID 저장
+        userPlatform: platform,
+        platformId,
         img: profileImage || "",
       });
 
       return toSafeUser(customer);
     }
   } catch (error) {
-    throw createError("AUTH/GOOGLE_OAUTH", {
-      messageOverride: "Google OAuth 로그인에 실패했습니다.",
+    throw createError("AUTH/OAUTH", {
+      messageOverride: `${platform} OAuth 로그인에 실패했습니다.`,
     });
   }
+}
+
+// ⭕ 6 - Google OAuth
+export async function googleOAuth({
+  googleId,
+  email,
+  firstName,
+  lastName,
+  profileImage,
+  userType,
+}: GoogleOAuthDto) {
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  return handleOAuth({
+    email,
+    name: fullName,
+    profileImage: profileImage || undefined,
+    userType,
+    platform: "GOOGLE",
+    platformId: googleId,
+  });
 }
 
 // ⭕ 7 - 네이버 OAuth
@@ -356,63 +382,14 @@ export async function naverOAuth({
   profileImage,
   userType,
 }: NaverOAuthDto) {
-  try {
-    // 기존 사용자 확인 (이메일로)
-    let existingUser: Mover | Customer | null = null;
-
-    if (userType === "MOVER") {
-      existingUser = await moverRepo.findByEmail(email);
-    } else if (userType === "CUSTOMER") {
-      existingUser = await customerRepo.findByEmail(email);
-    } else {
-      throw createError("AUTH/NAVER_OAUTH", {
-        messageOverride: "Naver OAuth 로그인에 실패했습니다.",
-      });
-    }
-
-    if (existingUser) {
-      if (existingUser.userPlatform === "NAVER") {
-        return toSafeUser(existingUser);
-      } else {
-        throw createError("AUTH/ACCOUNT_CONFLICT");
-      }
-    }
-
-    // 새 사용자 생성
-    const randomPassword = Math.random().toString(36).slice(-8); // 임시 비밀번호
-    const hashedPassword = await hashPassword(randomPassword);
-
-    if (userType === "MOVER") {
-      // Mover 생성 (Naver OAuth용 기본값 설정)
-      const mover = await moverRepo.create({
-        email,
-        password: hashedPassword,
-        phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        name: nickname, // Naver 닉네임을 name으로 사용
-        userPlatform: "NAVER",
-        naverId: naverId, // Naver ID 저장
-        img: profileImage || "",
-      });
-
-      return toSafeUser(mover);
-    } else if (userType === "CUSTOMER") {
-      const customer = await customerRepo.create({
-        name: nickname, // Naver 닉네임을 name으로 사용
-        email,
-        password: hashedPassword,
-        phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        userPlatform: "NAVER",
-        naverId: naverId, // Naver ID 저장
-        img: profileImage || "",
-      });
-
-      return toSafeUser(customer);
-    }
-  } catch (error) {
-    throw createError("AUTH/NAVER_OAUTH", {
-      messageOverride: "Naver OAuth 로그인에 실패했습니다.",
-    });
-  }
+  return handleOAuth({
+    email,
+    name: nickname,
+    profileImage: profileImage || undefined,
+    userType,
+    platform: "NAVER",
+    platformId: naverId,
+  });
 }
 
 // ⭕ 8 - 카카오 OAuth
@@ -423,62 +400,14 @@ export async function kakaoOAuth({
   profileImage,
   userType,
 }: KakaoOAuthDto) {
-  try {
-    // 기존 사용자 확인 (이메일로)
-    let existingUser: Mover | Customer | null = null;
-
-    if (userType === "MOVER") {
-      existingUser = await moverRepo.findByEmail(email);
-    } else if (userType === "CUSTOMER") {
-      existingUser = await customerRepo.findByEmail(email);
-    } else {
-      throw createError("AUTH/KAKAO_OAUTH", {
-        messageOverride: "Kakao OAuth 로그인에 실패했습니다.",
-      });
-    }
-
-    if (existingUser) {
-      if (existingUser.userPlatform === "KAKAO") {
-        return toSafeUser(existingUser);
-      } else {
-        throw createError("AUTH/ACCOUNT_CONFLICT");
-      }
-    }
-
-    const randomPassword = Math.random().toString(36).slice(-8); // 임시 비밀번호
-    const hashedPassword = await hashPassword(randomPassword);
-
-    if (userType === "MOVER") {
-      // Mover 생성 (Kakao OAuth용 기본값 설정)
-      const mover = await moverRepo.create({
-        email,
-        password: hashedPassword,
-        phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        name: username, // 카카오 사용자명을 name으로 사용
-        userPlatform: "KAKAO",
-        kakaoId: kakaoId, // Kakao ID 저장
-        img: profileImage || "",
-      });
-
-      return toSafeUser(mover);
-    } else if (userType === "CUSTOMER") {
-      const customer = await customerRepo.create({
-        name: username, // 카카오 사용자명을 name으로 사용
-        email,
-        password: hashedPassword,
-        phone: "00000000000", // 기본값, 나중에 업데이트 필요
-        userPlatform: "KAKAO",
-        kakaoId: kakaoId, // Kakao ID 저장
-        img: profileImage || "",
-      });
-
-      return toSafeUser(customer);
-    }
-  } catch (error) {
-    throw createError("AUTH/KAKAO_OAUTH", {
-      messageOverride: "Kakao OAuth 로그인에 실패했습니다.",
-    });
-  }
+  return handleOAuth({
+    email,
+    name: username,
+    profileImage: profileImage || undefined,
+    userType,
+    platform: "KAKAO",
+    platformId: kakaoId,
+  });
 }
 
 export default {

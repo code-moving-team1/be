@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import type { Prisma, Region, ServiceType, UserPlatform } from "@prisma/client";
+import { Prisma, Region, ServiceType, UserPlatform } from "@prisma/client";
 
 export async function findById(id: number) {
   return prisma.customer.findUnique({
@@ -34,32 +34,62 @@ export async function create(customer: {
   password: string;
   phone: string;
   userPlatform?: UserPlatform;
-  googleId?: string;
-  naverId?: string;
-  kakaoId?: string;
+  platformId?: string;
   img?: string;
 }) {
+  const platform =
+    customer.userPlatform === "GOOGLE" && customer.platformId
+      ? { userPlatform: customer.userPlatform, googleId: customer.platformId }
+      : customer.userPlatform === "NAVER" && customer.platformId
+      ? { userPlatform: customer.userPlatform, naverId: customer.platformId }
+      : customer.userPlatform === "KAKAO" && customer.platformId
+      ? { userPlatform: customer.userPlatform, kakaoId: customer.platformId }
+      : {};
+
   const result = await prisma.customer.create({
     data: {
       name: customer.name,
       email: customer.email,
       password: customer.password,
       phone: customer.phone,
-      ...(customer.userPlatform ? { userPlatform: customer.userPlatform } : {}),
-      ...(customer.googleId ? { googleId: customer.googleId } : {}),
-      ...(customer.naverId ? { naverId: customer.naverId } : {}),
-      ...(customer.kakaoId ? { kakaoId: customer.kakaoId } : {}),
+      ...platform,
       ...(customer.img !== undefined ? { img: customer.img } : {}),
     },
   });
-  // const serviceTypeResult = await Promise.all(
-  //   customer.serviceTypes.map((serviceType) => {
-  //     return prisma.customerServiceType.create({
-  //       data: {
-  //         customerId: result.id,
-  //         serviceType: serviceType as ServiceType,
-  //       },
-  //     });
+  return result;
+}
+
+export async function updateInitProfile(
+  id: number,
+  region: Region,
+  serviceTypes: ServiceType[],
+  img = ""
+) {
+  const result = await prisma.$transaction(async (tx) => {
+    const result = await tx.customer.update({
+      where: {
+        id,
+      },
+      data: {
+        region,
+        hasProfile: true,
+        img,
+      },
+    });
+    const serviceTypeResult = await Promise.all(
+      serviceTypes.map((serviceType) => {
+        return tx.customerServiceType.create({
+          data: {
+            customerId: result.id,
+            serviceType,
+          },
+        });
+      })
+    );
+
+    return result;
+  });
+
   return result;
 }
 
@@ -117,6 +147,7 @@ export default {
   findByEmail,
   findSafeById,
   create,
+  updateInitProfile,
   update,
   updateLastLoginAt,
   findByRegion,
