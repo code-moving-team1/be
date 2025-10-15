@@ -209,6 +209,7 @@ export const getDirectList = async (
       FROM "MoveRequest" mr
       INNER JOIN "DirectQuoteRequest" dr ON mr.id = dr."moveRequestId"
       WHERE dr."moverId" = ${moverId}
+      AND dr.status = 'PENDING'
       `
   );
   const total = Number((totalResult as any)[0].total);
@@ -227,6 +228,7 @@ export const getDirectList = async (
     INNER JOIN "DirectQuoteRequest" dr ON mr.id = dr."moveRequestId"
     LEFT JOIN "Customer" c ON mr."customerId" = c.id
     WHERE dr."moverId" = ${moverId}
+    AND dr.status = 'PENDING'
     ORDER BY ${order}
     LIMIT ${pageSize} OFFSET ${offset}
     `
