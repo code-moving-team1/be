@@ -22,6 +22,22 @@ const getByMoverAndRequest = async (moverId: number, moveRequestId: number) => {
   return result;
 };
 
+const getListByCustomer = async (customerId: number) => {
+  const result = await prisma.directQuoteRequest.findMany({
+    where: { moveRequest: { customerId } },
+    include: { moveRequest: true },
+  });
+  return result;
+};
+
+const getRejectedListByMover = async (moverId: number) => {
+  const result = await prisma.directQuoteRequest.findMany({
+    where: { moverId, status: "REJECTED" },
+    include: { moveRequest: true, rejectedRequest: true },
+  });
+  return result;
+};
+
 const create = async (moveRequestId: number, moverId: number) => {
   const result = await prisma.directQuoteRequest.create({
     data: {
@@ -56,7 +72,9 @@ const createRejectedRequest = async (
 export default {
   getById,
   getByMoverAndRequest,
+  getRejectedListByMover,
   create,
   update,
   createRejectedRequest,
+  getListByCustomer,
 };

@@ -7,6 +7,16 @@ const getById = async (id: number) => {
   return result;
 };
 
+const getListByCustomer = async (customerId: number) => {
+  const result = await directQuoteRequestRepo.getListByCustomer(customerId);
+  return result;
+};
+
+const getRejectedListByMover = async (moverId: number) => {
+  const result = await directQuoteRequestRepo.getRejectedListByMover(moverId);
+  return result;
+};
+
 const create = async (moveRequestId: number, moverId: number) => {
   const result = await directQuoteRequestRepo.create(moveRequestId, moverId);
   return result;
@@ -40,6 +50,8 @@ const updateToExpired = async (id: number) => {
 
 export default {
   getById,
+  getListByCustomer,
+  getRejectedListByMover,
   create,
   updateToAccepted,
   updateToRejected,
