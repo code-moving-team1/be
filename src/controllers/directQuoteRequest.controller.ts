@@ -4,6 +4,44 @@ import moveRequestService from "../services/moveRequest.service";
 import { createError } from "../utils/HttpError";
 import moverService from "../services/mover.service";
 
+const getListByCustomer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const customerId = (req as any).user?.id;
+  try {
+    const result = await directQuoteRequestService.getListByCustomer(
+      customerId
+    );
+    return res.status(200).json(result);
+  } catch (e) {
+    next(e);
+  }
+};
+
+const getRejectedListByMover = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const moverId = (req as any).user?.id;
+  const { userType } = (req as any).user;
+
+  if (userType !== "MOVER") {
+    createError("AUTH/FORBIDDEN");
+  }
+
+  try {
+    const result = await directQuoteRequestService.getRejectedListByMover(
+      moverId
+    );
+    return res.status(200).json(result);
+  } catch (e) {
+    next(e);
+  }
+};
+
 const create = async (req: Request, res: Response, next: NextFunction) => {
   const { customerId, userType } = (req as any).user;
   const { moveRequestId, moverId } = req.body;
@@ -95,6 +133,8 @@ const updateToExpired = async (
 };
 
 export default {
+  getListByCustomer,
+  getRejectedListByMover,
   create,
   updateToAccepted,
   updateToRejected,
