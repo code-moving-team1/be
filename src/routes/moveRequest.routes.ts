@@ -13,6 +13,13 @@ router.post(
   verifyAuth,
   moveRequestController.searchMoveRequestsController
 ); // Filtering 검색하여 GET
+
+router.post(
+  "/searchSentEstimates",
+  verifyAuth,
+  moveRequestController.searchSentEstimatesMoveRequestsController
+); // Filtering 검색하여 GET
+
 router.get(
   "/customer/active",
   verifyAuth,
