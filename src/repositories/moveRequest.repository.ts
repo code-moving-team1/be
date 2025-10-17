@@ -33,6 +33,15 @@ export const searchMoveRequests = async (
   const { page, pageSize, sort } = filters;
   const where = buildMoveRequestWhere(filters);
 
+  // ✅ 옵션으로만 동작: 내가 낸 건(노멀 견적)은 상태와 무관하게 포함
+  // if (includeMyHistory && moverId) {
+  //   // where.status는 이미 ACTIVE로 세팅되어 있음 → OR 로 추가
+  //   (where as any).OR = [
+  //     { status: "ACTIVE" },
+  //     { quotes: { some: { moverId, type: "NORMAL" } } },
+  //   ];
+  // }
+
   //전체 개수(페이지네이션 용)
   const [total, data] = await Promise.all([
     //total - 전체 개수 - 페이지네이션용
@@ -66,22 +75,44 @@ export const searchMoveRequests = async (
       include: {
         quotes: moverId
           ? {
+              // where: { moverId, type: "NORMAL" },
               where: { moverId },
+              select: {
+                id: true,
+                price: true,
+                comment: true,
+                status: true,
+                type: true,
+              },
               take: 1,
             }
           : true,
+        // :false, // 토큰없으면 quotes 안들고옴
       },
     }),
   ]);
 
-  const result = data.map((r) => ({
-    ...r,
-    // ✅ myQuote 필드 추가
-    // - 무버 로그인 상태라면: 해당 무버의 견적 1개만 매핑
-    // - 무버가 아닌 경우: 항상 null
-    // 이렇게 하면 프론트에서는 quotes 배열 대신 myQuote만 확인하면 됨
-    myQuote: moverId ? r.quotes?.[0] ?? null : null,
-  }));
+  const result = data.map((r) => {
+    const quotes = (r as any).quotes as
+      | Array<{
+          id: number;
+          price: number;
+          comment: string;
+          status: any;
+          type: any;
+        }>
+      | undefined;
+    return {
+      ...r,
+      moveRequest: quotes && quotes[0] ? quotes[0] : null, // 예원 태홍 사용
+
+      // ✅ myQuote 필드 추가
+      // - 무버 로그인 상태라면: 해당 무버의 견적 1개만 매핑
+      // - 무버가 아닌 경우: 항상 null
+      // 이렇게 하면 프론트에서는 quotes 배열 대신 myQuote만 확인하면 됨
+      myQuote: moverId ? r.quotes?.[0] ?? null : null, //성근님 사용
+    };
+  });
 
   return {
     meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
@@ -123,9 +154,16 @@ function buildMoveRequestWhere(
     where.serviceType = { in: serviceTypes };
   }
 
-  if (status && status.length > 0) {
-    where.status = { in: status }; // status : ACTIVE로 req가 와야 적용됨
+  // ✅ 기본값: status 미지정 시 ACTIVE만
+  if (!status || status.length === 0) {
+    where.status = "ACTIVE";
+  } else {
+    where.status = { in: status };
   }
+
+  // if (status && status.length > 0) {
+  //   where.status = { in: status }; // status : ACTIVE로 req가 와야 적용됨
+  // }
 
   if (dateFrom || dateTo) {
     where.moveDate = {
