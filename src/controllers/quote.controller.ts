@@ -4,7 +4,7 @@ import {
   SubmitQuoteBodySchema,
   type SubmitQuoteBody,
 } from "../schemas/quote.schema";
-import quoteService from "../services/quote.service";
+import quoteService, { getQuoteDetail } from "../services/quote.service";
 import { createError } from "../utils/HttpError";
 import { ZodError } from "zod";
 
@@ -123,12 +123,10 @@ const updateAllIfAccepted = async (
     );
 
     // const result = await quoteService.updateAllIfAccepted(id, moveRequestId);
-    return res
-      .status(201)
-      .json({
-        message: "견적 확정 성공 + booking 레코드 생성!",
-        bookingId: booking.id,
-      });
+    return res.status(201).json({
+      message: "견적 확정 성공 + booking 레코드 생성!",
+      bookingId: booking.id,
+    });
   } catch (err) {
     next(err);
   }
@@ -142,10 +140,28 @@ const submitIfDirect = async (
   req.body.type = "DIRECT";
   next();
 };
+// 견적 상세 페이지
+const getDetail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const quoteId = Number(req.params.id);
+    const customerId = (req as any).user?.id;
+    const userType = (req as any).user?.userType;
+
+    if (!customerId || userType !== "CUSTOMER") {
+      return res.status(401).json({ message: "고객 로그인 필요" });
+    }
+
+    const data = await getQuoteDetail(quoteId, customerId);
+    return res.status(200).json(data);
+  } catch (e) {
+    next(e);
+  }
+};
 
 export default {
   submit,
   getListByRequest,
   updateAllIfAccepted,
   submitIfDirect,
+  getDetail,
 };
