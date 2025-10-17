@@ -9,7 +9,7 @@ import {
   DirectRequestStatus,
 } from "@prisma/client";
 import { prisma } from "../lib/prisma";
-import quoteRepo from "../repositories/quote.repository";
+import quoteRepo, { getQuoteById } from "../repositories/quote.repository";
 
 import bookingRepo from "../repositories/booking.repository";
 import { SubmitQuoteBody } from "../schemas/quote.schema";
@@ -154,7 +154,7 @@ const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
   // 트랜잭션을 사용하여 모든 작업을 원자적으로 처리
   // 하나라도 실패하면 모든 작업이 롤백됨
   try {
-    return await prisma.$transaction((tx) =>
+    return await prisma.$transaction(tx =>
       acceptAndCreateBookingTx(tx, id, moveRequestId)
     );
   } catch (error) {
@@ -187,10 +187,26 @@ const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
   //   });
   // }
 };
+// 견적 상세페이지
+export const getQuoteDetail = async (id: number, customerId: number) => {
+  const q = await getQuoteById(id);
+  if (!q) {
+    throw createError("QUOTE/NOT_FOUND", {
+      messageOverride: "견적을 찾을 수 없습니다.",
+    });
+  }
+  if (q.moveRequest?.customerId !== customerId) {
+    throw createError("AUTH/UNAUTHORIZED", {
+      messageOverride: "접근 권한이 없습니다.",
+    });
+  }
+  return q;
+};
 
 export default {
   submit,
   getById,
   getListByRequest,
   updateAllIfAccepted,
+  getQuoteDetail,
 };

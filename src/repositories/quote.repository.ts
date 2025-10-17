@@ -114,6 +114,48 @@ const getSnapshotForBooking = async (quoteId: number) => {
   });
 };
 
+// 견적 상세 페이지
+export const getQuoteById = async (id: number) => {
+  return prisma.quote.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      price: true,
+      comment: true,
+      status: true,
+      type: true,
+      createdAt: true,
+      moverId: true,
+      moveRequestId: true,
+      mover: {
+        select: {
+          id: true,
+          nickname: true,
+          career: true,
+          averageRating: true,
+          totalReviews: true,
+          img: true,
+          _count: { select: { likes: true } },
+        },
+      },
+      moveRequest: {
+        select: {
+          id: true,
+          serviceType: true,
+          moveDate: true,
+          departure: true,
+          departureRegion: true,
+          destination: true,
+          destinationRegion: true,
+          status: true,
+          customerId: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+};
+
 export default {
   create,
   getById,
@@ -121,4 +163,5 @@ export default {
   updateToAccepted,
   updateAllToRejected,
   getSnapshotForBooking,
+  getQuoteById,
 };

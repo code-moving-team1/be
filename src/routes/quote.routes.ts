@@ -18,6 +18,9 @@ router.post(
 // 특정 견적 확정 (accepted로 변경하고 나머지 rejected로 변경)
 router.patch("/:id/accept", verifyAuth, quoteController.updateAllIfAccepted);
 
+// 견적 상세 페이지
+router.get("/:id", verifyAuth, quoteController.getDetail);
+
 // 지정 요청에 대해 견적 제출
 // router.post(
 //   "/direct/move-requests/:moveRequestId",
