@@ -61,6 +61,16 @@ const getDirectList = async (
   return await moveRequestRepo.getDirectList(moverId, sort, page, pageSize);
 };
 
+export const handleSearchSentEstimatesMoveRequests = async (
+  filters: SearchMoveRequestsInput,
+  moverId?: number
+) => {
+  return await moveRequestRepo.searchSentEstimatesMoveRequests(
+    filters,
+    moverId
+  );
+};
+
 export default {
   handleCreateMoveRequest,
   handleSearchMoveRequests,
@@ -68,4 +78,5 @@ export default {
   getById,
   getListByCustomerWhenDirect,
   getDirectList,
+  handleSearchSentEstimatesMoveRequests,
 };

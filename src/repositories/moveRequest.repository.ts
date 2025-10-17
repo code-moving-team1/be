@@ -240,6 +240,94 @@ export const getDirectList = async (
   };
 };
 
+export const searchSentEstimatesMoveRequests = async (
+  filters: SearchMoveRequestsInput,
+  moverId?: number
+) => {
+  const { page, pageSize, sort } = filters;
+  const where = buildMoveRequestSentEstimatesWhere(filters);
+  const [total, data] = await Promise.all([
+    prisma.moveRequest.count({ where }),
+
+    prisma.moveRequest.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: sort ? { [sort.field]: sort.order } : { createdAt: "desc" },
+
+      include: {
+        quotes: moverId
+          ? {
+              where: { moverId },
+              take: 1,
+            }
+          : true,
+      },
+    }),
+  ]);
+  const result = data.map((r) => ({
+    ...r,
+    // ✅ myQuote 필드 추가
+    // - 무버 로그인 상태라면: 해당 무버의 견적 1개만 매핑
+    // - 무버가 아닌 경우: 항상 null
+    // 이렇게 하면 프론트에서는 quotes 배열 대신 myQuote만 확인하면 됨
+    myQuote: moverId ? r.quotes?.[0] ?? null : null,
+  }));
+
+  return {
+    meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+    data: result,
+  };
+};
+
+function buildMoveRequestSentEstimatesWhere(
+  filters: SearchMoveRequestsInput
+): Prisma.MoveRequestWhereInput {
+  const {
+    regions,
+    departureRegions,
+    destinationRegions,
+    serviceTypes,
+    status,
+    dateFrom,
+    dateTo,
+  } = filters;
+
+  const where: Prisma.MoveRequestWhereInput = {};
+
+  if (regions && regions.length > 0) {
+    where.OR = [
+      { departureRegion: { in: regions } },
+      { destinationRegion: { in: regions } },
+    ];
+  }
+
+  if (departureRegions && departureRegions.length > 0) {
+    where.departureRegion = { in: departureRegions };
+  }
+
+  if (destinationRegions && destinationRegions.length > 0) {
+    where.destinationRegion = { in: destinationRegions };
+  }
+
+  if (serviceTypes && serviceTypes.length > 0) {
+    where.serviceType = { in: serviceTypes };
+  }
+
+  if (status && status.length > 0) {
+    where.status = { in: status }; // status : ACTIVE로 req가 와야 적용됨
+  }
+
+  if (dateFrom || dateTo) {
+    where.moveDate = {
+      ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
+      ...(dateTo ? { lte: new Date(dateTo) } : {}),
+    };
+  }
+
+  return where;
+}
+
 export default {
   createMoveRequest,
   getMoveRequestById,
@@ -248,4 +336,5 @@ export default {
   updateToCompleted,
   getListByCustomerWhenDirect,
   getDirectList,
+  searchSentEstimatesMoveRequests,
 };

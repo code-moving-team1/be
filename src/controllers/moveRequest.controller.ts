@@ -7,6 +7,7 @@ import {
 import moveRequestService, {
   handleCreateMoveRequest,
   handleSearchMoveRequests,
+  handleSearchSentEstimatesMoveRequests,
 } from "../services/moveRequest.service";
 
 //추후 에러타입 정의 및 에러 규격화 하겠습니다
@@ -139,6 +140,32 @@ const getDirectList = async (
   }
 };
 
+const searchSentEstimatesMoveRequestsController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const parseResult = searchMoveRequestsSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ errors: parseResult.error.format() }); //@TODO 에러타입
+    }
+    //@TODO 추후 verifyAuth 적용시 req.user사용
+    const user = (req as any).user;
+    const moverId = user?.userType === "MOVER" ? user.id : undefined;
+    const { meta, data } = await handleSearchSentEstimatesMoveRequests(
+      parseResult.data,
+      moverId
+    );
+
+    return res.status(200).json({ meta, data });
+  } catch (error: any) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: error.message || "검색하여 GET 실패" });
+  }
+};
+
 export default {
   createMoveRequestController,
   searchMoveRequestsController,
@@ -146,4 +173,5 @@ export default {
   getClosedListByCustomer,
   getListByCustomerWhenDirect,
   getDirectList,
+  searchSentEstimatesMoveRequestsController,
 };
