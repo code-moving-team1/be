@@ -134,3 +134,8 @@ Authorization: Bearer {CUSTOMER_JWT}
   "content": "시간 딱 맞춰 오시고 친절했습니다!",
   "rating": 5
 }
+
+
+### 리뷰작성가능한 리스트 불러오기
+### 고객 아이디로 로그인 + booking테이블에 고객아이디로 만들어진 booking중 COMPLETED 인거 불러오기
+GET http://localhost:4000/api/bookings/reviewables
