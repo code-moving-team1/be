@@ -123,4 +123,18 @@ const findReviewablesByCustomer = async (
   };
 };
 
-export default { create, findReviewablesByCustomer };
+// ✅ serviceDate가 기준 시각(before)보다 과거인 SCHEDULED를 COMPLETED로 전환
+const completeOverdue = async (before: Date) => {
+  return prisma.booking.updateMany({
+    where: {
+      status: BookingStatus.SCHEDULED,
+      serviceDate: { lt: before },
+    },
+    data: {
+      status: BookingStatus.COMPLETED,
+      updatedAt: new Date(),
+    },
+  }); // { count }
+};
+
+export default { create, findReviewablesByCustomer, completeOverdue };
