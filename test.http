@@ -139,3 +139,11 @@ Authorization: Bearer {CUSTOMER_JWT}
 ### 리뷰작성가능한 리스트 불러오기
 ### 고객 아이디로 로그인 + booking테이블에 고객아이디로 만들어진 booking중 COMPLETED 인거 불러오기
 GET http://localhost:4000/api/bookings/reviewables
+
+
+### booking의 serviceDate계산하여 status 갱신
+POST http://localhost:4000/api/internal/cron/complete-bookings?graceHours=6
+Content-Type: application/json
+X-Cron-Token: SuperPowerfulRandomSecret
+
+{ "source": "postman" }

@@ -12,6 +12,7 @@ import moverRoutes from "./routes/mover.routes";
 import reviewRoutes from "./routes/review.routes";
 import customerRoutes from "./routes/customer.routes";
 import bookingRoutes from "./routes/booking.routes";
+import cronRoutes from "./routes/cron.routes"
 import directQuoteRequestRoutes from "./routes/directQuoteRequest.routes";
 import { createError, HttpError } from "./utils/HttpError";
 import type { ErrorRequestHandler } from "express";
@@ -53,6 +54,7 @@ app.use("/api/customer", customerRoutes);
 app.use("/api/direct-quote-request", directQuoteRequestRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api", cronRoutes);
 
 // HttpError 기반 전역 에러 핸들러
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
