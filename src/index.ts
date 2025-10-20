@@ -52,7 +52,7 @@ app.use("/api/quote", quoteRoutes);
 app.use("/api/mover", moverRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/direct-quote-request", directQuoteRequestRoutes);
-app.use("/reviews", reviewRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api", cronRoutes);
 

@@ -126,7 +126,7 @@ GET http://localhost:3000/quotes/move-requests/{MOVE_REQUEST_ID}
 
 
 ### 리뷰작성
-POST http://localhost:3000/reviews/bookings/{BOOKING_ID}
+POST http://localhost:3000/api/reviews/bookings/{BOOKING_ID}
 Content-Type: application/json
 Authorization: Bearer {CUSTOMER_JWT}
 
@@ -149,4 +149,4 @@ X-Cron-Token: SuperPowerfulRandomSecret
 { "source": "postman" }
 
 ### 내가 작성한 리뷰 리스트(고객아이디로 로그인)
-POST http://localhost:4000/reviews/my?page=1&pageSize=10&sort=recent
+POST http://localhost:4000/api/reviews/my?page=1&pageSize=10&sort=recent
