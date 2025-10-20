@@ -88,6 +88,9 @@ export const searchMoveRequests = async (
             }
           : true,
         // :false, // 토큰없으면 quotes 안들고옴
+        customer: {
+          select: { name: true },
+        },
       },
     }),
   ]);
@@ -111,6 +114,7 @@ export const searchMoveRequests = async (
       // - 무버가 아닌 경우: 항상 null
       // 이렇게 하면 프론트에서는 quotes 배열 대신 myQuote만 확인하면 됨
       myQuote: moverId ? r.quotes?.[0] ?? null : null, //성근님 사용
+      customerName: r.customer?.name ?? null,
     };
   });
 
@@ -256,6 +260,7 @@ export const getDirectList = async (
     `
     SELECT 
       mr.*,
+      c.name as customer_name,
       c.email as customer_email,
       c.phone as customer_phone,
       c.region as customer_region,
