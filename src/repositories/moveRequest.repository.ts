@@ -305,6 +305,7 @@ export const searchSentEstimatesMoveRequests = async (
               take: 1,
             }
           : true,
+        customer: { select: { name: true } },
       },
     }),
   ]);
@@ -315,6 +316,7 @@ export const searchSentEstimatesMoveRequests = async (
     // - 무버가 아닌 경우: 항상 null
     // 이렇게 하면 프론트에서는 quotes 배열 대신 myQuote만 확인하면 됨
     myQuote: moverId ? r.quotes?.[0] ?? null : null,
+    customerName: r.customer?.name ?? null,
   }));
 
   return {
