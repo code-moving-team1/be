@@ -5,6 +5,8 @@ import reviewService from "../services/review.service";
 import { createError } from "../utils/HttpError";
 import {
   CreateReviewBodySchema,
+  MyReviewQuery,
+  MyReviewQuerySchema,
   type CreateReviewBody,
 } from "../schemas/review.schema";
 
@@ -49,4 +51,34 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export default { create };
+const listMine = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = (req as any)?.user;
+    const customerId = user?.id as number | undefined;
+    if (!customerId) return next(createError("AUTH/UNAUTHORIZED"));
+
+    let query: MyReviewQuery;
+    try {
+      query = MyReviewQuerySchema.parse(req.query);
+    } catch (e) {
+      if (e instanceof ZodError) {
+        return next(
+          createError("REQUEST/VALIDATION", { details: { issues: e.issues } })
+        );
+      }
+      throw e;
+    }
+
+    const result = await reviewService.listMyReviews(customerId, {
+      page: query.page,
+      pageSize: query.pageSize,
+      sort: query.sort,
+    });
+
+    return res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export default { create ,listMine};
