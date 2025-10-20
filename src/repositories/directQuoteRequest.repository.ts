@@ -31,11 +31,32 @@ const getListByCustomer = async (customerId: number) => {
 };
 
 const getRejectedListByMover = async (moverId: number) => {
-  const result = await prisma.directQuoteRequest.findMany({
+  const rows = await prisma.directQuoteRequest.findMany({
     where: { moverId, status: "REJECTED" },
-    include: { moveRequest: true, rejectedRequest: true },
+    include: {
+      moveRequest:
+        // true,
+        {
+          include: { customer: { select: { name: true } } },
+        },
+      rejectedRequest: true,
+    },
+    orderBy: { createdAt: "desc" },
   });
-  return result;
+
+  // return result;
+  // ✅ moveRequest.customer → moveRequest.customerName으로 평탄화
+  return rows.map((row) => {
+    const { moveRequest, ...rest } = row;
+    const { customer, ...mrRest } = moveRequest ?? ({} as any);
+    return {
+      ...rest,
+      moveRequest: {
+        ...mrRest,
+        customerName: customer?.name ?? null,
+      },
+    };
+  });
 };
 
 const create = async (moveRequestId: number, moverId: number) => {
