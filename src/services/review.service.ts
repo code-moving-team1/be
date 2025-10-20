@@ -4,6 +4,9 @@ import { prisma } from "../lib/prisma";
 import { createError } from "../utils/HttpError";
 import { createReviewByBookingTx } from "./tx/createReviewByBooking.tx";
 import type { CreateReviewBody } from "../schemas/review.schema";
+import reviewRepository, {
+  FindMyReviewsOpts,
+} from "../repositories/review.repository";
 
 const create = async (
   customerId: number,
@@ -37,4 +40,14 @@ const create = async (
   }
 };
 
-export default { create };
+const listMyReviews = async (customerId: number, opts: FindMyReviewsOpts) => {
+  try {
+    return await reviewRepository.findByCustomer(customerId, opts);
+  } catch (error) {
+    throw createError("SERVER/INTERNAL", {
+      messageOverride: "리뷰 목록 조회 중 오류가 발생했습니다.",
+      cause: error,
+    });
+  }
+};
+export default { create, listMyReviews };
