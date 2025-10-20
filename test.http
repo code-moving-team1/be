@@ -83,7 +83,7 @@ Cookie: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlclR5cGU
 
 
 ### 1) NORMAL 견적 제출 (기사 권한 토큰 필요)
-POST http://localhost:3000/quotes/move-requests/{MOVE_REQUEST_ID}
+POST http://localhost:4000/quotes/move-requests/{MOVE_REQUEST_ID}
 Content-Type: application/json
 Authorization: Bearer {MOVER_JWT}
 
@@ -94,7 +94,7 @@ Authorization: Bearer {MOVER_JWT}
 }
 
 ### 2) 경쟁 견적 하나 더 (다른 기사 or 같은 기사여도 type 조합 다르면 허용되지 않도록 @unique 확인)
-POST http://localhost:3000/quotes/move-requests/{MOVE_REQUEST_ID}
+POST http://localhost:4000/quotes/move-requests/{MOVE_REQUEST_ID}
 Content-Type: application/json
 Authorization: Bearer {MOVER2_JWT}
 
@@ -105,7 +105,7 @@ Authorization: Bearer {MOVER2_JWT}
 }
 
 ### 3) NORMAL 지정이 아닌, DIRECT 견적 제출 (직견 요청이 미리 있어야 통과)
-POST http://localhost:3000/quotes/direct/move-requests/{MOVE_REQUEST_ID}
+POST http://localhost:4000/quotes/direct/move-requests/{MOVE_REQUEST_ID}
 Content-Type: application/json
 Authorization: Bearer {MOVER_JWT}
 
@@ -115,18 +115,18 @@ Authorization: Bearer {MOVER_JWT}
 }
 
 ### 4) 견적 목록 조회 (확정 전 상태 확인)
-GET http://localhost:3000/quotes/move-requests/{MOVE_REQUEST_ID}
+GET http://localhost:4000/quotes/move-requests/{MOVE_REQUEST_ID}
 
 ### 5) 견적 확정 (고객 권한 토큰 필요) — 위 1) 또는 3)의 응답에서 quoteId 골라서 사용
-PATCH http://localhost:3000/quotes/{QUOTE_ID}/accept
+PATCH http://localhost:4000/quotes/{QUOTE_ID}/accept
 Authorization: Bearer {CUSTOMER_JWT}
 
 ### 6) 확정 이후, 같은 요청의 견적들 상태 확인
-GET http://localhost:3000/quotes/move-requests/{MOVE_REQUEST_ID}
+GET http://localhost:4000/quotes/move-requests/{MOVE_REQUEST_ID}
 
 
 ### 리뷰작성
-POST http://localhost:3000/api/reviews/bookings/{BOOKING_ID}
+POST http://localhost:4000/api/reviews/bookings/{BOOKING_ID}
 Content-Type: application/json
 Authorization: Bearer {CUSTOMER_JWT}
 

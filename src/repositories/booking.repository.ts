@@ -78,6 +78,8 @@ const findReviewablesByCustomer = async (
             averageRating: true,
             totalReviews: true,
             img: true,
+            introduction: true,
+            description: true,
           },
         },
         moveRequest: {
