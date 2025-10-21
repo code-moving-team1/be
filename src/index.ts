@@ -15,8 +15,11 @@ import bookingRoutes from "./routes/booking.routes";
 import cronRoutes from "./routes/cron.routes";
 import directQuoteRequestRoutes from "./routes/directQuoteRequest.routes";
 import likesRoutes from "./routes/likes.routes";
+import notificationRoutes from "./routes/notification.routes"
 import { createError, HttpError } from "./utils/HttpError";
 import type { ErrorRequestHandler } from "express";
+import http from "http";
+import { initSocket } from "./sockets";
 
 const app = express();
 app.use(
@@ -55,9 +58,15 @@ app.use("/api/customer", customerRoutes);
 app.use("/api/direct-quote-request", directQuoteRequestRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/notifications",notificationRoutes)
 app.use("/api", cronRoutes);
 app.use("/api/likes", likesRoutes);
 app.use("/reviews", reviewRoutes);
+
+const httpServer = http.createServer(app);
+// Socket.io부팅
+const io = initSocket(httpServer);
+// 필요 시 io를 의존성으로 주입하고 싶다면 app.set("io", io);
 
 // HttpError 기반 전역 에러 핸들러
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
@@ -73,6 +82,10 @@ app.use(errorHandler);
 
 //
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🚀 서버가 http://localhost:${PORT} 에서 실행 중`);
+// app.listen(PORT, () => {
+//   console.log(`🚀 서버가 http://localhost:${PORT} 에서 실행 중`);
+// });
+
+httpServer.listen(PORT, () => {
+  console.log(`🚀 HTTP & Socket 서버가 http://localhost:${PORT} 에서 실행 중`);
 });
