@@ -149,4 +149,4 @@ X-Cron-Token: SuperPowerfulRandomSecret
 { "source": "postman" }
 
 ### 내가 작성한 리뷰 리스트(고객아이디로 로그인)
-POST http://localhost:4000/api/reviews/my?page=1&pageSize=10&sort=recent
+GET http://localhost:4000/api/reviews/my?page=1&pageSize=10&sort=recent
