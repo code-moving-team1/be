@@ -3,6 +3,7 @@ import moverRepo, {
   MoverInitProfile,
   MoverListFilters,
 } from "../repositories/mover.repository";
+import { LikesRepository } from "../repositories/likes.repository";
 
 const getById = async (id: number) => {
   const result = await moverRepo.findById(id);
@@ -15,7 +16,7 @@ const getList = async (filters: MoverListFilters) => {
 };
 
 const getLikesList = async (customerId: number) => {
-  const result = await moverRepo.getLikesList(customerId);
+  const result = await LikesRepository.findRecent3ByCustomerId(customerId);
   return result;
 };
 

@@ -23,7 +23,10 @@ export type ErrorCode =
   | "BOOKING/NOT_FOUND"
   | "BOOKING/NOT_COMPLETED"
   | "REVIEW/DUPLICATE"
-  | "REVIEW/FORBIDDEN";
+  | "REVIEW/FORBIDDEN"
+  | "LIKES/DUPLICATE"
+  | "LIKES/NOT_FOUND"
+  | "LIKES/VALIDATION";
 
 export type MessageTemplate =
   | string
@@ -181,6 +184,24 @@ export const ERROR_CATALOG = {
   "REVIEW/FORBIDDEN": {
     status: 403,
     message: "해당 예약에 대한 리뷰 작성 권한이 없습니다.",
+    expose: true,
+    logLevel: "warn",
+  },
+  "LIKES/DUPLICATE": {
+    status: 409,
+    message: "이미 좋아요를 누른 기사입니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "LIKES/NOT_FOUND": {
+    status: 404,
+    message: "좋아요를 찾을 수 없습니다.",
+    expose: true,
+    logLevel: "info",
+  },
+  "LIKES/VALIDATION": {
+    status: 400,
+    message: "customerId와 moverId는 필수입니다.",
     expose: true,
     logLevel: "warn",
   },

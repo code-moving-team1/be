@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { Region, ServiceType, UserPlatform, type Prisma } from "@prisma/client";
 import { createError } from "../utils/HttpError";
+import { Rating } from "../types/rating";
 
 // 정렬 옵션 타입 정의
 export type SortOption = "reviews" | "rating" | "career" | "quotes";
@@ -86,6 +87,7 @@ export async function create(mover: {
 }
 
 export async function updateInitProfile(data: MoverInitProfile) {
+  console.log(data);
   const {
     id,
     nickname,
@@ -352,8 +354,16 @@ export async function getProfile(id: number) {
     throw createError("USER/NOT_FOUND");
   }
 
-  const { password, naverId, googleId, kakaoId, ...rest } = result;
-  return rest;
+  const li = [0, 0, 0, 0, 0, 0];
+
+  for (const review of result.reviews) {
+    const rating = review.rating;
+    if (Rating.isValid(rating) && li[rating] !== undefined) {
+      li[rating] = li[rating] + 1;
+    }
+  }
+
+  return { ratings_count: li, ...result };
 }
 
 export default {
