@@ -75,6 +75,7 @@ const findReviewablesByCustomer = async (
           select: {
             id: true,
             nickname: true,
+            name:true,
             averageRating: true,
             totalReviews: true,
             img: true,

@@ -43,6 +43,7 @@ const findByCustomer = async (
           select: {
             id: true,
             nickname: true,
+            name: true,
             img: true,
             averageRating: true,
             totalReviews: true,
@@ -88,6 +89,7 @@ const findByCustomer = async (
         ? {
             id: r.mover.id,
             nickname: r.mover.nickname,
+            name: r.mover.name,
             img: r.mover.img,
             averageRating: r.mover.averageRating,
             totalReviews: r.mover.totalReviews,
