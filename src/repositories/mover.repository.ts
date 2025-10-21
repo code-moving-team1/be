@@ -339,7 +339,7 @@ export async function getProfile(id: number) {
     include: {
       moverRegions: true,
       moverServiceTypes: true,
-      reviews: true,
+      reviews: { include: { customer: { select: { name: true } } } },
       _count: {
         select: {
           likes: true,
@@ -363,7 +363,9 @@ export async function getProfile(id: number) {
     }
   }
 
-  return { ratings_count: li, ...result };
+  const { password, naverId, googleId, kakaoId, ...rest } = result;
+
+  return { ratings_count: li, ...rest };
 }
 
 export default {
