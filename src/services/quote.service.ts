@@ -20,7 +20,8 @@ import moveRequestRepo, {
 } from "../repositories/moveRequest.repository";
 import directQuoteRequestRepo from "../repositories/directQuoteRequest.repository";
 import { acceptAndCreateBookingTx } from "./tx/acceptAndCreateBooking.tx";
-import { notifyCustomer } from "./notification.service";
+import { notifyCustomer, notifyMover } from "./notification.service";
+import { notificationLink } from "../constants/notification.links";
 
 type Tx = Prisma.TransactionClient;
 
@@ -98,11 +99,12 @@ const submit = async (
         );
       }
     }
-    
+
     await notifyCustomer(moveRequest.customerId, {
       type: "NEW_QUOTE_RECEIVED",
       content: "내 이사요청에 새 견적이 도착했어요.",
-      link: `/myEstimates/${moveRequestId}`,
+      link: notificationLink.newQuoteReceived(moveRequestId),
+      // link: `/myEstimates/${moveRequestId}`,
     });
 
     return created;
@@ -161,9 +163,18 @@ const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
   // 트랜잭션을 사용하여 모든 작업을 원자적으로 처리
   // 하나라도 실패하면 모든 작업이 롤백됨
   try {
-    return await prisma.$transaction((tx) =>
+    const booking = await prisma.$transaction((tx) =>
       acceptAndCreateBookingTx(tx, id, moveRequestId)
     );
+
+    // await notifyMover(booking.id, {
+    await notifyMover(booking.moverId, {
+      type: "QUOTE_ACCEPTED",
+      content: "고객이 당신의 견적을 확정했어요.",
+      link: notificationLink.quoteAccepted(moveRequestId),
+    });
+
+    return booking;
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -179,21 +190,8 @@ const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
       cause: error,
     });
   }
-
-  //@TODO 삭제 예정
-  // try {
-  //   const result = await prisma.$transaction(async () => [
-  //     quoteRepo.updateToAccepted(id),
-  //     moveRequestRepo.updateToCompleted(moveRequestId),
-  //     quoteRepo.updateAllToRejected(moveRequestId),
-  //   ]);
-  //   return result;
-  // } catch (error) {
-  //   throw createError("SERVER/INTERNAL", {
-  //     messageOverride: "견적 확정 중 트랜잭션 오류로 요청이 취소되었습니다.",
-  //   });
-  // }
 };
+
 // 견적 상세페이지
 export const getQuoteDetail = async (id: number, customerId: number) => {
   const q = await getQuoteById(id);

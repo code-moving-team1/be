@@ -19,7 +19,9 @@ export async function acceptAndCreateBookingTx(
   tx: Tx,
   quoteId: number,
   moveRequestId: number
-): Promise<{ id: number }> {
+): Promise<{
+  moverId: number; id: number 
+}> {
   // 0) 대상 견적 + 스냅샷 필드 조회
   const q = await tx.quote.findUnique({
     where: { id: quoteId },
@@ -74,7 +76,7 @@ export async function acceptAndCreateBookingTx(
       status: BookingStatus.SCHEDULED, // scheduled/completed 2단계 체계
       serviceDate: q.moveRequest.moveDate, // 스냅샷
     },
-    select: { id: true },
+    select: { id: true, moverId: true, customerId: true, moveRequestId: true },
   });
 
   // 5) 같은 요청의 "다른" PENDING 견적은 REJECT
@@ -95,5 +97,5 @@ export async function acceptAndCreateBookingTx(
   //   });
   // }
 
-  return created; // { id }
+  return created; // { id,moverId,customerId,moveRequestId }
 }

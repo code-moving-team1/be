@@ -7,6 +7,8 @@ import type { CreateReviewBody } from "../schemas/review.schema";
 import reviewRepository, {
   FindMyReviewsOpts,
 } from "../repositories/review.repository";
+import { notifyMover } from "./notification.service";
+import { notificationLink } from "../constants/notification.links";
 
 const create = async (
   customerId: number,
@@ -14,7 +16,7 @@ const create = async (
   payload: CreateReviewBody
 ) => {
   try {
-    return await prisma.$transaction((tx) =>
+    const result = await prisma.$transaction((tx) =>
       createReviewByBookingTx({
         tx,
         bookingId,
@@ -23,6 +25,13 @@ const create = async (
         rating: payload.rating,
       })
     );
+    await notifyMover(result.moverId, {
+      type: "REVIEW_RECEIVED",
+      content: "고객이 리뷰를 남겼어요.",
+      link: notificationLink.reviewReceived(result.moverId),
+    });
+
+    return result;
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
