@@ -38,7 +38,7 @@ const create = async (params: CreateBookingParams) => {
       status,
       serviceDate,
     },
-    select: { id: true },
+    select: { id: true, moverId: true, customerId: true, moveRequestId: true },
   });
 };
 
@@ -75,7 +75,7 @@ const findReviewablesByCustomer = async (
           select: {
             id: true,
             nickname: true,
-            name:true,
+            name: true,
             averageRating: true,
             totalReviews: true,
             img: true,

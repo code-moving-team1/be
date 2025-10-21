@@ -28,7 +28,11 @@ export async function createReviewByBookingTx({
   customerId,
   content,
   rating,
-}: CreateReviewTxArgs): Promise<{ id: number }> {
+}: CreateReviewTxArgs): Promise<{
+  id: number;
+  moverId: number;
+  moveRequestId: number;
+}> {
   // 1) Booking 조회
   const booking = await tx.booking.findUnique({
     where: { id: bookingId },
@@ -75,12 +79,16 @@ export async function createReviewByBookingTx({
   const avg =
     total === 0
       ? review.rating
-      : (((mover?.averageRating ?? 0) * (total - 1) + review.rating) / total);
+      : ((mover?.averageRating ?? 0) * (total - 1) + review.rating) / total;
 
   await tx.mover.update({
     where: { id: review.moverId },
     data: { totalReviews: total, averageRating: avg },
   });
 
-  return { id: review.id };
+  return {
+    id: review.id,
+    moverId: booking.moverId,
+    moveRequestId: booking.moveRequestId,
+  };
 }
