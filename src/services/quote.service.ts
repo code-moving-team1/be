@@ -20,6 +20,7 @@ import moveRequestRepo, {
 } from "../repositories/moveRequest.repository";
 import directQuoteRequestRepo from "../repositories/directQuoteRequest.repository";
 import { acceptAndCreateBookingTx } from "./tx/acceptAndCreateBooking.tx";
+import { notifyCustomer } from "./notification.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -97,6 +98,12 @@ const submit = async (
         );
       }
     }
+    
+    await notifyCustomer(moveRequest.customerId, {
+      type: "NEW_QUOTE_RECEIVED",
+      content: "내 이사요청에 새 견적이 도착했어요.",
+      link: `/myEstimates/${moveRequestId}`,
+    });
 
     return created;
   } catch (error) {
@@ -154,7 +161,7 @@ const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
   // 트랜잭션을 사용하여 모든 작업을 원자적으로 처리
   // 하나라도 실패하면 모든 작업이 롤백됨
   try {
-    return await prisma.$transaction(tx =>
+    return await prisma.$transaction((tx) =>
       acceptAndCreateBookingTx(tx, id, moveRequestId)
     );
   } catch (error) {
