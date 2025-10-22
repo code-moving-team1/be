@@ -9,14 +9,18 @@ let ioRef: Server | null = null;
 
 export const bindIo = (io: Server) => {
   ioRef = io;
+  console.log("[SOCKET IO BOUND]"); // ✅ 바인딩 확인
 };
 
-export const emitToCustomer = (customerId: number, payload: NotificationPayload) => {
-  if (!ioRef) return;
+export const emitToCustomer = (
+  customerId: number,
+  payload: NotificationPayload
+) => {
+  if (!ioRef) throw new Error("Socket.IO not bound yet");
   ioRef.to(customerRoom(customerId)).emit("notification:new", payload);
 };
 
 export const emitToMover = (moverId: number, payload: NotificationPayload) => {
-  if (!ioRef) return;
+  if (!ioRef) throw new Error("Socket.IO not bound yet");
   ioRef.to(moverRoom(moverId)).emit("notification:new", payload);
 };

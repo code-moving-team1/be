@@ -2,14 +2,23 @@
 import type { Socket } from "socket.io";
 import jwt from "jsonwebtoken"; // 프로젝트에서 쓰는 검증 유틸 재사용 권장
 import type { SocketData } from "./types";
+import * as cookie from "cookie";
+// import cookie from "cookie";
 
 // 프론트에서 connection시 Authorization: Bearer <token> 헤더 or query.token 로 전달
 export function verifySocketAuth(socket: Socket) {
-  // 1) 헤더 우선
-  const authHeader = socket.handshake.headers["authorization"];
-  let token: string | undefined;
+  //1) 쿠키에서 읽기(HttpOnly도 여기로 옴)
+  const cookies = cookie.parse(socket.handshake.headers.cookie || "");
+  let token = cookies.accessToken;
 
-  if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
+  // 2) 헤더 Bearer 또는 query.token 도 허용(있으면 사용)
+  const authHeader = socket.handshake.headers["authorization"];
+  // let token: string | undefined;
+  if (
+    !token &&
+    typeof authHeader === "string" &&
+    authHeader.startsWith("Bearer ")
+  ) {
     token = authHeader.slice("Bearer ".length);
   } else if (typeof socket.handshake.query?.token === "string") {
     token = socket.handshake.query.token;
