@@ -30,13 +30,14 @@ export const initSocket = (httpServer: HttpServer) => {
       verifySocketAuth(socket);
       next();
     } catch (e: any) {
+      console.error("[SOCKET AUTH ERROR]", e?.message);
       next(e);
     }
   });
 
   io.on("connection", (socket) => {
     const { userType, userId } = socket.data;
-
+    console.log("[SOCKET CONNECTED]", { userType, userId, id: socket.id });
     // 룸 조인
     if (userType === "CUSTOMER") {
       socket.join(customerRoom(userId));
@@ -54,8 +55,9 @@ export const initSocket = (httpServer: HttpServer) => {
       //   .emit("notification:unreadCount", { count });
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
       // 로그/정리(필요시)
+      console.log("[SOCKET DISCONNECT]", socket.id, reason);
     });
   });
 
