@@ -62,6 +62,7 @@ app.use("/api/notifications",notificationRoutes)
 app.use("/api", cronRoutes);
 app.use("/api/likes", likesRoutes);
 app.use("/reviews", reviewRoutes);
+app.get("/health", (_req, res) => res.send("ok"));
 
 const httpServer = http.createServer(app);
 // Socket.io부팅
