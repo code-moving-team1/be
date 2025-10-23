@@ -15,19 +15,39 @@ import bookingRoutes from "./routes/booking.routes";
 import cronRoutes from "./routes/cron.routes";
 import directQuoteRequestRoutes from "./routes/directQuoteRequest.routes";
 import likesRoutes from "./routes/likes.routes";
-import notificationRoutes from "./routes/notification.routes"
+import notificationRoutes from "./routes/notification.routes";
 import { createError, HttpError } from "./utils/HttpError";
 import type { ErrorRequestHandler } from "express";
 import http from "http";
 import { initSocket } from "./sockets";
 
 const app = express();
+
+app.set("trust proxy", 1); // ✅ 프록시 뒤에서 secure 쿠키 허용
+
+const ALLOWED_ORIGINS = [
+  process.env.FRONTEND_URL?.replace(/\/$/, ""), // 끝 슬래시 제거
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: true, // 모든 origin 허용
-    credentials: true, // 쿠키 전송 허용
+    origin: (origin, cb) => {
+      // SSR/서버헬스 등 Origin 없는 요청 허용
+      if (!origin) return cb(null, true);
+      return ALLOWED_ORIGINS.includes(origin)
+        ? cb(null, true)
+        : cb(new Error("CORS"));
+    },
+    credentials: true,
   })
 );
+
+// app.use(
+//   cors({
+//     origin: true, // 모든 origin 허용
+//     credentials: true, // 쿠키 전송 허용
+//   })
+// );
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
@@ -58,7 +78,7 @@ app.use("/api/customer", customerRoutes);
 app.use("/api/direct-quote-request", directQuoteRequestRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/bookings", bookingRoutes);
-app.use("/api/notifications",notificationRoutes)
+app.use("/api/notifications", notificationRoutes);
 app.use("/api", cronRoutes);
 app.use("/api/likes", likesRoutes);
 app.use("/reviews", reviewRoutes);
