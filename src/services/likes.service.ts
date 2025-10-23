@@ -31,6 +31,11 @@ export class LikesService {
     return { success: true };
   }
 
+  // 좋아요 일괄 삭제
+  static async deleteAllLikes(likeIds: number[], customerId: number) {
+    return await LikesRepository.deleteAll(likeIds, customerId);
+  }
+
   // 고객의 좋아요 목록 조회
   static async getCustomerLikes(customerId: number) {
     return await LikesRepository.findByCustomerId(customerId);

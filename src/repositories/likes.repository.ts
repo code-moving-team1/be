@@ -220,6 +220,16 @@ export class LikesRepository {
     }
   }
 
+  // 좋아요 일괄 삭제
+  static async deleteAll(likeIds: number[], customerId: number) {
+    return await prisma.likes.deleteMany({
+      where: {
+        id: { in: likeIds },
+        customerId,
+      },
+    });
+  }
+
   // 고객의 좋아요 개수 조회
   static async countByCustomerId(customerId: number) {
     return await prisma.likes.count({

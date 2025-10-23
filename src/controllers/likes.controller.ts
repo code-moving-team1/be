@@ -52,6 +52,26 @@ export class LikesController {
     });
   }
 
+  // 좋아요 일괄 삭제
+  static async deleteAllLikes(req: Request, res: Response) {
+    const { likeIds } = req.body;
+    const customerId = (req as any).user.id;
+    const { userType } = (req as any).user;
+
+    if (userType !== "CUSTOMER") {
+      throw createError("AUTH/FORBIDDEN", {
+        messageOverride: "고객 회원만 좋아요를 일괄 삭제할 수 있습니다.",
+      });
+    }
+
+    await LikesService.deleteAllLikes(likeIds, customerId);
+
+    res.status(200).json({
+      success: true,
+      message: "좋아요가 일괄 삭제되었습니다.",
+    });
+  }
+
   // 고객의 좋아요 목록 조회
   static async getCustomerLikes(req: Request, res: Response) {
     const customerId = (req as any).user.id;

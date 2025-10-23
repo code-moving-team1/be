@@ -11,7 +11,10 @@ router.post("/", verifyAuth, LikesController.createLike);
 router.post("/toggle", verifyAuth, LikesController.toggleLike);
 
 // 좋아요 삭제
-router.delete("/:moverId", verifyAuth, LikesController.deleteLike);
+router.delete("/:id", verifyAuth, LikesController.deleteLike);
+
+// 좋아요 일괄 삭제
+router.post("/delete-all", verifyAuth, LikesController.deleteAllLikes);
 
 // 고객의 좋아요 목록 조회
 router.get("/customer", verifyAuth, LikesController.getCustomerLikes);
