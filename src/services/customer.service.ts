@@ -1,5 +1,7 @@
 import { Region, ServiceType } from "@prisma/client";
-import customerRepo from "../repositories/customer.repository";
+import customerRepo, {
+  CustomerBasicInfoUpdate,
+} from "../repositories/customer.repository";
 
 const updateInitProfile = async (
   id: number,
@@ -16,6 +18,12 @@ const updateInitProfile = async (
   return result;
 };
 
+const updateBasicInfo = async (data: CustomerBasicInfoUpdate) => {
+  const result = await customerRepo.updateBasicInfo(data);
+  return result;
+};
+
 export default {
   updateInitProfile,
+  updateBasicInfo,
 };

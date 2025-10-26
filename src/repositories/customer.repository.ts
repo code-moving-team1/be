@@ -1,5 +1,21 @@
 import { prisma } from "../lib/prisma";
 import { Prisma, Region, ServiceType, UserPlatform } from "@prisma/client";
+import { createError } from "../utils/HttpError";
+import bcrypt from "bcrypt";
+
+const SALT_ROUNDS = 10;
+
+export type CustomerBasicInfoUpdate = {
+  id: number;
+  name?: string;
+  email: string;
+  phone?: string;
+  currentPassword?: string;
+  newPassword?: string;
+  img?: string;
+  region?: Region;
+  serviceTypes?: ServiceType[];
+};
 
 export async function findById(id: number) {
   return prisma.customer.findUnique({
@@ -93,6 +109,97 @@ export async function updateInitProfile(
   return result;
 }
 
+export async function updateBasicInfo(data: CustomerBasicInfoUpdate) {
+  const {
+    id,
+    name,
+    email,
+    phone,
+    currentPassword,
+    newPassword,
+    img,
+    region,
+    serviceTypes,
+  } = data;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const customer = await tx.customer.findUnique({
+      where: { id },
+      select: { password: true, email: true },
+    });
+
+    if (!customer) {
+      throw createError("USER/NOT_FOUND");
+    }
+
+    // 이메일 변경이 있는 경우
+    if (email !== customer.email) {
+      try {
+        await tx.customer.update({
+          where: { id },
+          data: { email: email },
+        });
+      } catch (e) {
+        throw createError("AUTH/DUPLICATE", {
+          messageOverride: "이미 사용 중인 이메일입니다.",
+        });
+      }
+    }
+
+    // 비밀번호 변경이 있는 경우
+    if (currentPassword && newPassword) {
+      const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        customer.password
+      );
+      if (!isPasswordValid) {
+        throw createError("AUTH/PASSWORD", {
+          messageOverride: "현재 비밀번호가 올바르지 않습니다.",
+        });
+      }
+      const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+      await tx.customer.update({
+        where: { id },
+        data: { password: hashedNewPassword },
+      });
+    }
+
+    // 서비스 타입 업데이트 (있는 경우)
+    if (serviceTypes !== undefined) {
+      // 기존 서비스 타입 삭제
+      await tx.customerServiceType.deleteMany({
+        where: { customerId: id },
+      });
+
+      // 새 서비스 타입 추가
+      await Promise.all(
+        serviceTypes.map((serviceType) => {
+          return tx.customerServiceType.create({
+            data: {
+              customerId: id,
+              serviceType,
+            },
+          });
+        })
+      );
+    }
+
+    const updatedCustomer = await tx.customer.update({
+      where: { id },
+      data: {
+        ...(name ? { name } : {}),
+        ...(phone ? { phone } : {}),
+        ...(img ? { img } : {}),
+        ...(region ? { region } : {}),
+      },
+    });
+
+    return updatedCustomer;
+  });
+
+  return result;
+}
+
 export async function update(id: number, data: Prisma.CustomerUpdateInput) {
   return prisma.customer.update({
     where: {
@@ -148,6 +255,7 @@ export default {
   findSafeById,
   create,
   updateInitProfile,
+  updateBasicInfo,
   update,
   updateLastLoginAt,
   findByRegion,

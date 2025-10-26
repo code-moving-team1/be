@@ -9,5 +9,6 @@ router.patch(
   verifyAuth,
   customerController.updateInitProfile
 );
+router.patch("/profile-edit", verifyAuth, customerController.updateBasicInfo);
 
 export default router;
