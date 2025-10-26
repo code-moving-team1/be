@@ -2,7 +2,9 @@ import { prisma } from "../lib/prisma";
 import { Region, ServiceType, UserPlatform, type Prisma } from "@prisma/client";
 import { createError } from "../utils/HttpError";
 import { Rating } from "../types/rating";
+import bcrypt from "bcrypt";
 
+const SALT_ROUNDS = 10;
 // 정렬 옵션 타입 정의
 export type SortOption = "reviews" | "rating" | "career" | "quotes";
 
@@ -33,6 +35,15 @@ export type MoverProfileUpdate = {
   regions?: Region[];
   serviceTypes?: ServiceType[];
   img?: string;
+};
+
+export type MoverBasicInfoUpdate = {
+  id: number;
+  name?: string;
+  email: string;
+  phone?: string;
+  currentPassword?: string;
+  newPassword?: string;
 };
 
 export async function findById(id: number) {
@@ -146,6 +157,65 @@ export async function updateInitProfile(data: MoverInitProfile) {
     );
 
     return result;
+  });
+
+  return result;
+}
+
+export async function updateBasicInfo(data: MoverBasicInfoUpdate) {
+  const { id, name, email, phone, currentPassword, newPassword } = data;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const mover = await tx.mover.findUnique({
+      where: { id },
+      select: { password: true, email: true },
+    });
+
+    if (!mover) {
+      throw createError("USER/NOT_FOUND");
+    }
+
+    // 이메일 변경이 있는 경우
+    if (email !== mover.email) {
+      try {
+        await tx.mover.update({
+          where: { id },
+          data: { email: email },
+        });
+      } catch (e) {
+        throw createError("AUTH/DUPLICATE", {
+          messageOverride: "이미 사용 중인 이메일입니다.",
+        });
+      }
+    }
+
+    // 비밀번호 변경이 있는 경우
+    if (currentPassword && newPassword) {
+      const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        mover.password
+      );
+      if (!isPasswordValid) {
+        throw createError("AUTH/PASSWORD", {
+          messageOverride: "현재 비밀번호가 올바르지 않습니다.",
+        });
+      }
+      const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+      await tx.mover.update({
+        where: { id },
+        data: { password: hashedNewPassword },
+      });
+    }
+
+    const updatedMover = await tx.mover.update({
+      where: { id },
+      data: {
+        ...(name ? { name } : {}),
+        ...(phone ? { phone } : {}),
+      },
+    });
+
+    return updatedMover;
   });
 
   return result;
@@ -495,6 +565,7 @@ export default {
   create,
   updateInitProfile,
   updateProfile,
+  updateBasicInfo,
   update,
   updateLastLoginAt,
   getList,

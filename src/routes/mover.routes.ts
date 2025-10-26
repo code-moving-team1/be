@@ -9,5 +9,6 @@ router.get("/:id", moverController.getProfile);
 router.get("/", moverController.getList);
 router.patch("/profile-setting", verifyAuth, moverController.updateInitProfile);
 router.patch("/profile-edit", verifyAuth, moverController.updateProfile);
+router.patch("/basic-info-edit", verifyAuth, moverController.updateBasicInfo);
 
 export default router;

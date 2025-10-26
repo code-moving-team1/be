@@ -2,6 +2,7 @@ import { Region, ServiceType } from "@prisma/client";
 import moverRepo, {
   MoverInitProfile,
   MoverProfileUpdate,
+  MoverBasicInfoUpdate,
   MoverListFilters,
 } from "../repositories/mover.repository";
 import { LikesRepository } from "../repositories/likes.repository";
@@ -36,6 +37,11 @@ const updateProfile = async (data: MoverProfileUpdate) => {
   return result;
 };
 
+const updateBasicInfo = async (data: MoverBasicInfoUpdate) => {
+  const result = await moverRepo.updateBasicInfo(data);
+  return result;
+};
+
 export default {
   getById,
   getList,
@@ -43,4 +49,5 @@ export default {
   getProfile,
   updateInitProfile,
   updateProfile,
+  updateBasicInfo,
 };
