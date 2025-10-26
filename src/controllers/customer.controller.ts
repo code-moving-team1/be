@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import customerService from "../services/customer.service";
 import { createError } from "../utils/HttpError";
+import { saveTokens } from "../services/auth.service";
+import { setTokenCookie } from "./auth.controller";
 
 const updateInitProfile = async (
   req: Request,
@@ -18,7 +20,19 @@ const updateInitProfile = async (
   }
 
   try {
-    await customerService.updateInitProfile(id, region, serviceTypes, img);
+    const result = await customerService.updateInitProfile(
+      id,
+      region,
+      serviceTypes,
+      img
+    );
+    const { accessToken, refreshToken } = await saveTokens(
+      result.id,
+      userType,
+      result.hasProfile
+    );
+    setTokenCookie(res, "accessToken", accessToken);
+    setTokenCookie(res, "refreshToken", refreshToken);
     return res.status(200).json({ message: "초기 프로필 업데이트 성공" });
   } catch (e) {
     next(e);

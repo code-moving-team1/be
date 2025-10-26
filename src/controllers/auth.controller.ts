@@ -4,7 +4,7 @@ import auth from "../middlewares/auth";
 import passport from "../lib/passport";
 import { createError } from "../utils/HttpError";
 
-function setTokenCookie(
+export function setTokenCookie(
   res: express.Response,
   tokenName: string,
   token: string
@@ -223,7 +223,6 @@ customerAuthController.get(
     try {
       const user = req.user;
       if (!user) {
-        return res;
         throw createError("AUTH/UNAUTHORIZED", {
           messageOverride: "Google OAuth 인증에 실패했습니다.",
         });
