@@ -70,9 +70,35 @@ const updateInitProfile = async (
   }
 };
 
+const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id, userType } = (req as any).user;
+
+  // 유저 타입이 MOVER가 아니면 에러 처리
+  if (userType !== "MOVER") {
+    throw createError("AUTH/FORBIDDEN", {
+      messageOverride: "해당 요청에 대한 권한이 없습니다.",
+    });
+  }
+
+  try {
+    const result = await moverService.updateProfile({
+      id,
+      ...req.body,
+    });
+    return res.status(200).json({ message: "프로필 업데이트 성공" });
+  } catch (e) {
+    next(e);
+  }
+};
+
 export default {
   getProfile,
   getList,
   getLikesList,
   updateInitProfile,
+  updateProfile,
 };

@@ -24,6 +24,17 @@ export type MoverInitProfile = {
   img?: string;
 };
 
+export type MoverProfileUpdate = {
+  id: number;
+  nickname?: string;
+  career?: string;
+  introduction?: string;
+  description?: string;
+  regions?: Region[];
+  serviceTypes?: ServiceType[];
+  img?: string;
+};
+
 export async function findById(id: number) {
   return prisma.mover.findUnique({
     where: {
@@ -135,6 +146,114 @@ export async function updateInitProfile(data: MoverInitProfile) {
     );
 
     return result;
+  });
+
+  return result;
+}
+
+export async function updateProfile(data: MoverProfileUpdate) {
+  const {
+    id,
+    nickname,
+    career,
+    introduction,
+    description,
+    regions,
+    serviceTypes,
+    img,
+  } = data;
+
+  const result = await prisma.$transaction(async (tx) => {
+    // 기본 정보 업데이트
+    const updateData: any = {};
+    if (nickname !== undefined) updateData.nickname = nickname;
+    if (career !== undefined) updateData.career = career;
+    if (introduction !== undefined) updateData.introduction = introduction;
+    if (description !== undefined) updateData.description = description;
+    if (img !== undefined) updateData.img = img;
+
+    const mover = await tx.mover.update({
+      where: { id },
+      data: updateData,
+      include: {
+        moverRegions: { select: { region: true } },
+        moverServiceTypes: { select: { serviceType: true } },
+      },
+    });
+
+    // 지역 정보 업데이트 (있는 경우)
+    if (regions !== undefined) {
+      const existingRegions = mover.moverRegions.map((mr) => mr.region);
+      const regionsToAdd = regions.filter(
+        (region) => !existingRegions.includes(region)
+      );
+      const regionsToRemove = existingRegions.filter(
+        (region) => !regions.includes(region)
+      );
+
+      // 삭제할 지역들만 삭제
+      if (regionsToRemove.length > 0) {
+        await tx.moverRegion.deleteMany({
+          where: {
+            moverId: id,
+            region: { in: regionsToRemove },
+          },
+        });
+      }
+
+      // 추가할 지역들만 추가
+      if (regionsToAdd.length > 0) {
+        await Promise.all(
+          regionsToAdd.map((region) => {
+            return tx.moverRegion.create({
+              data: {
+                moverId: id,
+                region,
+              },
+            });
+          })
+        );
+      }
+    }
+
+    // 서비스 타입 정보 업데이트 (있는 경우)
+    if (serviceTypes !== undefined) {
+      const existingServiceTypes = mover.moverServiceTypes.map(
+        (mst) => mst.serviceType
+      );
+      const serviceTypesToAdd = serviceTypes.filter(
+        (serviceType) => !existingServiceTypes.includes(serviceType)
+      );
+      const serviceTypesToRemove = existingServiceTypes.filter(
+        (serviceType) => !serviceTypes.includes(serviceType)
+      );
+
+      // 삭제할 서비스 타입들만 삭제
+      if (serviceTypesToRemove.length > 0) {
+        await tx.moverServiceType.deleteMany({
+          where: {
+            moverId: id,
+            serviceType: { in: serviceTypesToRemove },
+          },
+        });
+      }
+
+      // 추가할 서비스 타입들만 추가
+      if (serviceTypesToAdd.length > 0) {
+        await Promise.all(
+          serviceTypesToAdd.map((serviceType) => {
+            return tx.moverServiceType.create({
+              data: {
+                moverId: id,
+                serviceType,
+              },
+            });
+          })
+        );
+      }
+    }
+
+    return mover;
   });
 
   return result;
@@ -375,6 +494,7 @@ export default {
   findSafeById,
   create,
   updateInitProfile,
+  updateProfile,
   update,
   updateLastLoginAt,
   getList,
