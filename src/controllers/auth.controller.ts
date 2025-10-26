@@ -208,7 +208,7 @@ moverAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/auth/success?type=mover`
+        }/init-profile/mover`
       );
     } catch (error) {
       next(error);
@@ -244,7 +244,7 @@ customerAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/auth/success?type=customer`
+        }/init-profile/customer`
       );
     } catch (error) {
       next(error);
@@ -296,7 +296,7 @@ moverAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/auth/success?type=mover`
+        }/init-profile/mover`
       );
     } catch (error) {
       next(error);
@@ -331,7 +331,7 @@ customerAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/auth/success?type=customer`
+        }/init-profile/customer`
       );
     } catch (error) {
       next(error);
@@ -385,7 +385,7 @@ moverAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/auth/success?type=mover`
+        }/init-profile/mover`
       );
     } catch (error) {
       next(error);
@@ -420,7 +420,7 @@ customerAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/auth/success?type=customer`
+        }/init-profile/customer`
       );
     } catch (error) {
       next(error);
