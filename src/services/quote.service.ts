@@ -9,7 +9,10 @@ import {
   DirectRequestStatus,
 } from "@prisma/client";
 import { prisma } from "../lib/prisma";
-import quoteRepo, { getQuoteById } from "../repositories/quote.repository";
+import quoteRepo, {
+  getQuoteById,
+  getMyQuoteDetail,
+} from "../repositories/quote.repository";
 
 import bookingRepo from "../repositories/booking.repository";
 import { SubmitQuoteBody } from "../schemas/quote.schema";
@@ -163,7 +166,7 @@ const updateAllIfAccepted = async (id: number, moveRequestId: number) => {
   // 트랜잭션을 사용하여 모든 작업을 원자적으로 처리
   // 하나라도 실패하면 모든 작업이 롤백됨
   try {
-    const booking = await prisma.$transaction((tx) =>
+    const booking = await prisma.$transaction(tx =>
       acceptAndCreateBookingTx(tx, id, moveRequestId)
     );
 
@@ -208,10 +211,18 @@ export const getQuoteDetail = async (id: number, customerId: number) => {
   return q;
 };
 
+export const handleGetMyQuoteDetail = async (
+  quoteId: number,
+  moverId: number
+) => {
+  return await getMyQuoteDetail(quoteId, moverId);
+};
+
 export default {
   submit,
   getById,
   getListByRequest,
   updateAllIfAccepted,
   getQuoteDetail,
+  handleGetMyQuoteDetail,
 };
