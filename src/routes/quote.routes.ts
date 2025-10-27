@@ -21,6 +21,8 @@ router.patch("/:id/accept", verifyAuth, quoteController.updateAllIfAccepted);
 // 견적 상세 페이지
 router.get("/:id", verifyAuth, quoteController.getDetail);
 
+router.get("/quotes/:id", verifyAuth, quoteController.getMyQuoteDetail);
+
 // 지정 요청에 대해 견적 제출
 // router.post(
 //   "/direct/move-requests/:moveRequestId",

@@ -156,6 +156,37 @@ export const getQuoteById = async (id: number) => {
   });
 };
 
+export const getMyQuoteDetail = async (quoteId: number, moverId: number) => {
+  const q = await prisma.quote.findFirst({
+    where: { id: quoteId, moverId },
+    include: {
+      moveRequest: true,
+      moveRequest: {
+        include: { customer: { select: { name: true } } },
+      },
+    },
+  });
+  if (!q) return null;
+
+  return {
+    id: q.id,
+    price: q.price,
+    status: q.status,
+    type: q.type,
+    comment: q.comment,
+    createdAt: q.createdAt,
+    moveRequest: {
+      id: q.moveRequest.id,
+      departure: q.moveRequest.departure,
+      destination: q.moveRequest.destination,
+      moveDate: q.moveRequest.moveDate as any,
+      serviceType: q.moveRequest.serviceType as any,
+      status: q.moveRequest.status as any,
+      customerName: q.moveRequest.customer?.name ?? null,
+    },
+  };
+};
+
 export default {
   create,
   getById,
@@ -164,4 +195,5 @@ export default {
   updateAllToRejected,
   getSnapshotForBooking,
   getQuoteById,
+  getMyQuoteDetail,
 };

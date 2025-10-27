@@ -4,7 +4,10 @@ import {
   SubmitQuoteBodySchema,
   type SubmitQuoteBody,
 } from "../schemas/quote.schema";
-import quoteService, { getQuoteDetail } from "../services/quote.service";
+import quoteService, {
+  getQuoteDetail,
+  handleGetMyQuoteDetail,
+} from "../services/quote.service";
 import { createError } from "../utils/HttpError";
 import { ZodError } from "zod";
 
@@ -158,10 +161,35 @@ const getDetail = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+export const getMyQuoteDetail = async (req: Request, res: Response) => {
+  try {
+    const moverId = Number((req as any).user?.id);
+    if (!moverId)
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+
+    const quoteId = Number(req.params.id);
+    if (Number.isNaN(quoteId)) {
+      return res.status(400).json({ message: "잘못된 quote id" });
+    }
+
+    const data = await quoteService.handleGetMyQuoteDetail(quoteId, moverId);
+    if (!data)
+      return res.status(404).json({ message: "견적을 찾을 수 없습니다" });
+
+    return res.status(200).json(data);
+  } catch (e: any) {
+    console.error(e);
+    return res
+      .status(500)
+      .json({ message: e.message || "견적 상세 조회 실패" });
+  }
+};
+
 export default {
   submit,
   getListByRequest,
   updateAllIfAccepted,
   submitIfDirect,
   getDetail,
+  getMyQuoteDetail,
 };
