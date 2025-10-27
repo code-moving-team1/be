@@ -125,7 +125,7 @@ export async function updateBasicInfo(data: CustomerBasicInfoUpdate) {
   const result = await prisma.$transaction(async (tx) => {
     const customer = await tx.customer.findUnique({
       where: { id },
-      select: { password: true, email: true },
+      select: { password: true, email: true, customerServiceTypes: true },
     });
 
     if (!customer) {
@@ -166,22 +166,31 @@ export async function updateBasicInfo(data: CustomerBasicInfoUpdate) {
 
     // 서비스 타입 업데이트 (있는 경우)
     if (serviceTypes !== undefined) {
-      // 기존 서비스 타입 삭제
-      await tx.customerServiceType.deleteMany({
-        where: { customerId: id },
-      });
-
-      // 새 서비스 타입 추가
-      await Promise.all(
-        serviceTypes.map((serviceType) => {
-          return tx.customerServiceType.create({
-            data: {
-              customerId: id,
-              serviceType,
-            },
-          });
-        })
+      const existingServiceTypes = customer.customerServiceTypes.map(
+        (cst) => cst.serviceType
       );
+      const serviceTypesToAdd = serviceTypes.filter(
+        (serviceType) => !existingServiceTypes.includes(serviceType)
+      );
+      const serviceTypesToRemove = existingServiceTypes.filter(
+        (serviceType) => !serviceTypes.includes(serviceType)
+      );
+
+      if (serviceTypesToRemove.length > 0) {
+        await tx.customerServiceType.deleteMany({
+          where: { customerId: id, serviceType: { in: serviceTypesToRemove } },
+        });
+      }
+
+      if (serviceTypesToAdd.length > 0) {
+        await Promise.all(
+          serviceTypesToAdd.map((serviceType) => {
+            return tx.customerServiceType.create({
+              data: { customerId: id, serviceType },
+            });
+          })
+        );
+      }
     }
 
     const updatedCustomer = await tx.customer.update({
