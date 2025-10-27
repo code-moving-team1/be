@@ -1,5 +1,5 @@
 // src/services/moveRequest.service.ts
-import { MoveRequestStatus } from "@prisma/client";
+// import { MoveRequestStatus } from "@prisma/client";
 import moveRequestRepo from "../repositories/moveRequest.repository";
 import {
   CreateMoveRequestInput,
@@ -21,20 +21,24 @@ export const handleSearchMoveRequests = async (
   return await moveRequestRepo.searchMoveRequests(filters, moverId);
 };
 
+// ✅ prisma 직접 접근 제거, 레포로 위임
 const getListByCustomer = async (customerId: number, isActive: boolean) => {
-  const where = isActive
-    ? { customerId, status: MoveRequestStatus.ACTIVE }
-    : {
-        customerId,
-        status: {
-          in: [MoveRequestStatus.COMPLETED, MoveRequestStatus.FINISHED],
-        },
-      };
-  return prisma?.moveRequest.findMany({
-    where,
-    orderBy: { createdAt: "asc" },
-  });
+  return moveRequestRepo.getListByCustomer(customerId, isActive);
 };
+// const getListByCustomer = async (customerId: number, isActive: boolean) => {
+//   const where = isActive
+//     ? { customerId, status: MoveRequestStatus.ACTIVE }
+//     : {
+//         customerId,
+//         status: {
+//           in: [MoveRequestStatus.COMPLETED, MoveRequestStatus.FINISHED],
+//         },
+//       };
+//   return prisma?.moveRequest.findMany({
+//     where,
+//     orderBy: { createdAt: "asc" },
+//   });
+// };
 
 const getById = async (id: number) => {
   return await moveRequestRepo.getMoveRequestById(id);
