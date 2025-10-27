@@ -160,7 +160,7 @@ export const getMyQuoteDetail = async (quoteId: number, moverId: number) => {
   const q = await prisma.quote.findFirst({
     where: { id: quoteId, moverId },
     include: {
-      moveRequest: true,
+      // moveRequest: true,
       moveRequest: {
         include: { customer: { select: { name: true } } },
       },
