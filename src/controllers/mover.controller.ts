@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import moverService from "../services/mover.service";
 import { createError } from "../utils/HttpError";
+import { saveTokens } from "../services/auth.service";
+import { setTokenCookie } from "./auth.controller";
 
 const getProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -51,11 +53,68 @@ const updateInitProfile = async (
   }
 
   try {
-    await moverService.updateInitProfile({
+    const result = await moverService.updateInitProfile({
       id,
       ...req.body,
     });
+    const { accessToken, refreshToken } = await saveTokens(
+      result.id,
+      userType,
+      result.hasProfile
+    );
+    setTokenCookie(res, "accessToken", accessToken);
+    setTokenCookie(res, "refreshToken", refreshToken);
     return res.status(200).json({ message: "초기 프로필 업데이트 성공" });
+  } catch (e) {
+    next(e);
+  }
+};
+
+const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id, userType } = (req as any).user;
+
+  // 유저 타입이 MOVER가 아니면 에러 처리
+  if (userType !== "MOVER") {
+    throw createError("AUTH/FORBIDDEN", {
+      messageOverride: "해당 요청에 대한 권한이 없습니다.",
+    });
+  }
+
+  try {
+    const result = await moverService.updateProfile({
+      id,
+      ...req.body,
+    });
+    return res.status(200).json({ message: "프로필 업데이트 성공" });
+  } catch (e) {
+    next(e);
+  }
+};
+
+const updateBasicInfo = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id, userType } = (req as any).user;
+
+  // 유저 타입이 MOVER가 아니면 에러 처리
+  if (userType !== "MOVER") {
+    throw createError("AUTH/FORBIDDEN", {
+      messageOverride: "해당 요청에 대한 권한이 없습니다.",
+    });
+  }
+
+  try {
+    const result = await moverService.updateBasicInfo({
+      id,
+      ...req.body,
+    });
+    return res.status(200).json({ message: "기본정보 업데이트 성공" });
   } catch (e) {
     next(e);
   }
@@ -66,4 +125,6 @@ export default {
   getList,
   getLikesList,
   updateInitProfile,
+  updateProfile,
+  updateBasicInfo,
 };
