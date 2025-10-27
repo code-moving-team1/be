@@ -180,16 +180,32 @@ function buildMoveRequestWhere(
 }
 
 const getListByCustomer = async (customerId: number, isActive = true) => {
-  const moveStatus = isActive
-    ? MoveRequestStatus.ACTIVE
-    : MoveRequestStatus.FINISHED || MoveRequestStatus.COMPLETED;
-  const result = await prisma.moveRequest.findMany({
-    where: { customerId, status: moveStatus },
+  const where: Prisma.MoveRequestWhereInput = isActive
+    ? { customerId, status: MoveRequestStatus.ACTIVE }
+    : {
+        customerId,
+        status: {
+          in: [MoveRequestStatus.COMPLETED, MoveRequestStatus.FINISHED],
+        },
+      };
+
+  return prisma.moveRequest.findMany({
+    where,
     orderBy: { createdAt: "asc" },
   });
-
-  return result;
 };
+
+// const getListByCustomer = async (customerId: number, isActive = true) => {
+//   const moveStatus = isActive
+//     ? MoveRequestStatus.ACTIVE
+//     : MoveRequestStatus.FINISHED || MoveRequestStatus.COMPLETED;
+//   const result = await prisma.moveRequest.findMany({
+//     where: { customerId, status: moveStatus },
+//     orderBy: { createdAt: "asc" },
+//   });
+
+//   return result;
+// };
 
 const updateToCompleted = async (id: number) => {
   const result = await prisma.moveRequest.update({
