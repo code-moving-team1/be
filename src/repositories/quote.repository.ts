@@ -116,51 +116,67 @@ const getSnapshotForBooking = async (quoteId: number) => {
 
 // 견적 상세 페이지
 export const getQuoteById = async (id: number) => {
-  return prisma.quote.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      price: true,
-      comment: true,
-      status: true,
-      type: true,
-      createdAt: true,
-      moverId: true,
-      moveRequestId: true,
-      mover: {
-        select: {
-          id: true,
-          nickname: true,
-          career: true,
-          averageRating: true,
-          totalReviews: true,
-          img: true,
-          _count: { select: { likes: true } },
+  return prisma.quote
+    .findUnique({
+      where: { id },
+      select: {
+        id: true,
+        price: true,
+        comment: true,
+        status: true,
+        type: true,
+        createdAt: true,
+        moverId: true,
+        moveRequestId: true,
+        mover: {
+          select: {
+            id: true,
+            name: true,
+            nickname: true,
+            career: true,
+            averageRating: true,
+            totalReviews: true,
+            img: true,
+            _count: { select: { likes: true } },
+          },
+        },
+        moveRequest: {
+          select: {
+            id: true,
+            serviceType: true,
+            moveDate: true,
+            departure: true,
+            departureRegion: true,
+            destination: true,
+            destinationRegion: true,
+            status: true,
+            customerId: true,
+            createdAt: true,
+          },
         },
       },
-      moveRequest: {
-        select: {
-          id: true,
-          serviceType: true,
-          moveDate: true,
-          departure: true,
-          departureRegion: true,
-          destination: true,
-          destinationRegion: true,
-          status: true,
-          customerId: true,
-          createdAt: true,
-        },
-      },
-    },
-  });
+    })
+    .then(async row =>
+      row
+        ? {
+            ...row,
+            mover: row.mover
+              ? {
+                  ...row.mover,
+                  confirmedCount: await prisma.booking.count({
+                    where: { moverId: row.moverId },
+                  }),
+                }
+              : row.mover,
+          }
+        : null
+    );
 };
 
 export const getMyQuoteDetail = async (quoteId: number, moverId: number) => {
   const q = await prisma.quote.findFirst({
     where: { id: quoteId, moverId },
     include: {
-      // moveRequest: true,
       moveRequest: {
         include: { customer: { select: { name: true } } },
       },
