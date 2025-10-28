@@ -5,6 +5,9 @@ import passport from "../lib/passport";
 import { createError } from "../utils/HttpError";
 import { setAuthCookies, clearAuthCookies } from "../utils/cookies";
 
+const REDIRECT_CUSTOMER = "/auth/success?type=customer";
+const REDIRECT_MOVER = "/auth/success?type=mover";
+
 export function setTokenCookie(
   res: express.Response,
   tokenName: string,
@@ -215,7 +218,7 @@ moverAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/init-profile/mover`
+        }${REDIRECT_MOVER}`
       );
     } catch (error) {
       next(error);
@@ -250,7 +253,7 @@ customerAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/init-profile/customer`
+        }${REDIRECT_CUSTOMER}`
       );
     } catch (error) {
       next(error);
@@ -302,7 +305,7 @@ moverAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/init-profile/mover`
+        }${REDIRECT_MOVER}`
       );
     } catch (error) {
       next(error);
@@ -337,7 +340,7 @@ customerAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/init-profile/customer`
+        }${REDIRECT_CUSTOMER}`
       );
     } catch (error) {
       next(error);
@@ -391,7 +394,7 @@ moverAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/init-profile/mover`
+        }${REDIRECT_MOVER}`
       );
     } catch (error) {
       next(error);
@@ -426,7 +429,7 @@ customerAuthController.get(
       res.redirect(
         `${
           process.env.FRONTEND_URL || "http://localhost:3000"
-        }/init-profile/customer`
+        }${REDIRECT_CUSTOMER}`
       );
     } catch (error) {
       next(error);

@@ -16,6 +16,8 @@ export const kakaoMoverStrategy = new KakaoStrategy(
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
+      console.log(`프로필 있니? ${profile} dd`);
+      console.log(profile);
       const { id, displayName } = profile;
       const email = profile._json.kakao_account.email;
       const profileImage = profile._json.properties.profile_image;
@@ -51,7 +53,7 @@ export const kakaoCustomerStrategy = new KakaoStrategy(
   async (accessToken, refreshToken, profile, done) => {
     try {
       const { id, displayName } = profile;
-      const email = profile._json.email;
+      const email = profile._json.kakao_account.email;
       const profileImage = profile._json.properties.profile_image;
 
       if (!email) {
