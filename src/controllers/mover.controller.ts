@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import moverService from "../services/mover.service";
 import { createError } from "../utils/HttpError";
 import { saveTokens } from "../services/auth.service";
-import { setTokenCookie } from "./auth.controller";
+import { setAccessTokenCookie, setRefreshTokenCookie } from "../utils/cookies";
 
 const getProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -62,8 +62,8 @@ const updateInitProfile = async (
       userType,
       result.hasProfile
     );
-    setTokenCookie(res, "accessToken", accessToken);
-    setTokenCookie(res, "refreshToken", refreshToken);
+    setAccessTokenCookie(res, accessToken);
+    setRefreshTokenCookie(res, refreshToken);
     return res.status(200).json({ message: "초기 프로필 업데이트 성공" });
   } catch (e) {
     next(e);
