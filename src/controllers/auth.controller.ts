@@ -12,6 +12,30 @@ import {
 const REDIRECT_CUSTOMER = "/auth/success?type=customer";
 const REDIRECT_MOVER = "/auth/success?type=mover";
 
+/**
+ * 쿠키를 포함한 리다이렉트 (HTML 응답 사용)
+ * 리버스 프록시 환경에서도 쿠키가 정상적으로 저장되도록 함
+ */
+function redirectWithCookies(res: express.Response, redirectUrl: string) {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const fullUrl = `${frontendUrl}${redirectUrl}`;
+
+  // HTML 응답으로 리다이렉트 (쿠키는 응답 헤더에 포함됨)
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.status(200).send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta http-equiv="refresh" content="0;url=${fullUrl}">
+        <script>window.location.href = "${fullUrl}";</script>
+      </head>
+      <body>
+        <p>리다이렉트 중... <a href="${fullUrl}">여기를 클릭하세요</a></p>
+      </body>
+    </html>
+  `);
+}
+
 const moverAuthController = express.Router();
 
 // 1. 회원가입
@@ -195,12 +219,8 @@ moverAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (프론트엔드 URL로)
-      res.redirect(
-        `${
-          process.env.FRONTEND_URL || "http://localhost:3000"
-        }${REDIRECT_MOVER}`
-      );
+      // 성공 시 리다이렉트 (쿠키 포함)
+      redirectWithCookies(res, REDIRECT_MOVER);
     } catch (error) {
       next(error);
     }
@@ -230,12 +250,8 @@ customerAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (프론트엔드 URL로)
-      res.redirect(
-        `${
-          process.env.FRONTEND_URL || "http://localhost:3000"
-        }${REDIRECT_CUSTOMER}`
-      );
+      // 성공 시 리다이렉트 (쿠키 포함)
+      redirectWithCookies(res, REDIRECT_CUSTOMER);
     } catch (error) {
       next(error);
     }
@@ -282,12 +298,8 @@ moverAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (프론트엔드 URL로)
-      res.redirect(
-        `${
-          process.env.FRONTEND_URL || "http://localhost:3000"
-        }${REDIRECT_MOVER}`
-      );
+      // 성공 시 리다이렉트 (쿠키 포함)
+      redirectWithCookies(res, REDIRECT_MOVER);
     } catch (error) {
       next(error);
     }
@@ -317,12 +329,8 @@ customerAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (프론트엔드 URL로)
-      res.redirect(
-        `${
-          process.env.FRONTEND_URL || "http://localhost:3000"
-        }${REDIRECT_CUSTOMER}`
-      );
+      // 성공 시 리다이렉트 (쿠키 포함)
+      redirectWithCookies(res, REDIRECT_CUSTOMER);
     } catch (error) {
       next(error);
     }
@@ -371,12 +379,8 @@ moverAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (프론트엔드 URL로)
-      res.redirect(
-        `${
-          process.env.FRONTEND_URL || "http://localhost:3000"
-        }${REDIRECT_MOVER}`
-      );
+      // 성공 시 리다이렉트 (쿠키 포함)
+      redirectWithCookies(res, REDIRECT_MOVER);
     } catch (error) {
       next(error);
     }
@@ -406,12 +410,8 @@ customerAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (프론트엔드 URL로)
-      res.redirect(
-        `${
-          process.env.FRONTEND_URL || "http://localhost:3000"
-        }${REDIRECT_CUSTOMER}`
-      );
+      // 성공 시 리다이렉트 (쿠키 포함)
+      redirectWithCookies(res, REDIRECT_CUSTOMER);
     } catch (error) {
       next(error);
     }
