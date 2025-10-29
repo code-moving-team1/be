@@ -10,7 +10,6 @@ export const baseCookieOptions: CookieOptions = {
   secure: isProd, // 배포에서 반드시 true (HTTPS)
   sameSite: isProd ? "none" : "lax",
   path: "/",
-  domain: process.env.FRONTEND_DOMAIN || "localhost", // 필요 시만 사용
 };
 
 export function setAccessTokenCookie(res: Response, access: string) {
