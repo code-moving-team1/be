@@ -3,6 +3,7 @@ import authService, { saveTokens } from "../services/auth.service";
 import auth from "../middlewares/auth";
 import passport from "../lib/passport";
 import { createError } from "../utils/HttpError";
+import { setAuthCookies, clearAuthCookies } from "../utils/cookies";
 
 export function setTokenCookie(
   res: express.Response,
@@ -73,8 +74,10 @@ moverAuthController.post(
   async (req: any, res, next) => {
     try {
       await authService.logout(req.user!.id, "MOVER");
-      res.clearCookie("accessToken");
-      res.clearCookie("refreshToken");
+      clearAuthCookies(res);
+      //여기에도 setTokenCookie설정이 들어가야하는데 없어서 배포환경에서 토큰이 안날아갔던거
+      // res.clearCookie("accessToken");
+      // res.clearCookie("refreshToken");
       res.status(204).end();
     } catch (error) {
       next(error);
@@ -144,8 +147,10 @@ customerAuthController.post(
   async (req: any, res, next) => {
     try {
       await authService.logout(req.user!.id, "CUSTOMER");
-      res.clearCookie("accessToken");
-      res.clearCookie("refreshToken");
+      clearAuthCookies(res);
+
+      // res.clearCookie("accessToken");
+      // res.clearCookie("refreshToken");
       res.status(204).end();
     } catch (error) {
       next(error);
