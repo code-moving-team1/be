@@ -22,6 +22,10 @@ function redirectWithCookies(res: express.Response, redirectUrl: string) {
 
   // HTML 응답으로 리다이렉트 (쿠키는 응답 헤더에 포함됨)
   res.setHeader("Content-Type", "text/html; charset=utf-8");
+
+  console.log("리다이렉트..");
+  console.log(res.cookie);
+
   res.status(200).send(`
     <!DOCTYPE html>
     <html>
