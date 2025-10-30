@@ -23,6 +23,12 @@ import * as cookie from "cookie";
 // 프론트에서 connection시 Authorization: Bearer <token> 헤더 or query.token 로 전달
 export function verifySocketAuth(socket: Socket) {
   let token: string | undefined;
+  const rawCookie = socket.handshake.headers.cookie;
+  if (!rawCookie) {
+    console.warn("[SOCKET] no cookie in handshake");
+  } else {
+    console.log("[SOCKET] cookie present");
+  }
 
   // 1) socket.handshake.auth.token (프론트가 넣은 표준 위치)
   if (typeof socket.handshake.auth?.token === "string") {
