@@ -34,7 +34,7 @@ export const initSocket = (httpServer: HttpServer) => {
     },
 
     // 필요 시 path, transports, pingTimeout 등도 여기서 커스터마이징 가능
-    // path: "/socket.io",
+    path: "/socket.io",
     // transports: ["websocket", "polling"],
     // pingTimeout: 30000,
   });
