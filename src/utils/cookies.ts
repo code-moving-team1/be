@@ -10,6 +10,8 @@ export const baseCookieOptions: CookieOptions = {
   secure: isProd, // 배포에서 반드시 true (HTTPS)
   sameSite: isProd ? "none" : "lax",
   path: "/",
+  // ✅ CHIPS: 크롬의 3rd-party 차단 우회 (파티션 쿠키로 저장/전송)
+  ...(isProd ? { partitioned: true } : {}),
 };
 
 export function setAccessTokenCookie(res: Response, access: string) {
