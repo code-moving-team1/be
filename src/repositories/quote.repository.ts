@@ -62,7 +62,7 @@ const getListByRequest = async (moveRequestId: number) => {
           averageRating: true,
           totalReviews: true,
           img: true,
-          _count: { select: { likes: true } },
+          _count: { select: { likes: true, bookings: true } },
         },
       },
     },
