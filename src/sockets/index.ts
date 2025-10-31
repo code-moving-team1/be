@@ -28,7 +28,11 @@ export const initSocket = (httpServer: HttpServer) => {
     // 프론트에서 소켓을 붙일 때의 CORS 설정
     cors: {
       // 쉼표로 구분된 ORIGIN 목록을 허용. 로컬 기본값은 3000
-      origin: process.env.CORS_ORIGIN?.split(",") ?? ["http://localhost:3000"],
+      // origin: process.env.CORS_ORIGIN?.split(",") ?? ["http://localhost:3000"],
+      origin: (process.env.CORS_ORIGIN ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
       // 크리덴셜(쿠키 등) 포함 핸드셰이크 허용
       credentials: true,
     },
@@ -47,6 +51,11 @@ export const initSocket = (httpServer: HttpServer) => {
   io.use((socket, next) => {
     try {
       verifySocketAuth(socket); // 내부에서 토큰 파싱/검증 + socket.data 설정
+      console.log("[HS DEBUG]", {
+        hasCookie: !!socket.handshake.headers.cookie,
+        origin: socket.handshake.headers.origin,
+        // authPayload: socket.handshake.auth, // 이제는 비어있을 예정
+      });
       next();
     } catch (e: any) {
       console.error("[SOCKET AUTH ERROR]", e?.message); //디버깅용 로그

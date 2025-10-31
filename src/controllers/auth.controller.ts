@@ -8,6 +8,7 @@ import {
   setAccessTokenCookie,
   setRefreshTokenCookie,
 } from "../utils/cookies";
+import jwt from "jsonwebtoken";
 
 const REDIRECT_CUSTOMER = "/auth/success?type=customer";
 const REDIRECT_MOVER = "/auth/success?type=mover";
@@ -416,6 +417,40 @@ customerAuthController.get(
 
       // 성공 시 리다이렉트 (쿠키 포함)
       redirectWithCookies(res, REDIRECT_CUSTOMER);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// === MOVER: 소켓 토큰 발급 ===
+moverAuthController.get(
+  "/socket-token",
+  auth.verifyAuth, // accessToken 쿠키 or Bearer로 인증
+  async (req: any, res, next) => {
+    try {
+      const payload = { id: req.user!.id, userType: "MOVER" as const };
+      const socketToken = jwt.sign(payload, process.env.JWT_SECRET!, {
+        expiresIn: "5m",
+      });
+      res.json({ socketToken, expInSec: 300 });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// === CUSTOMER: 소켓 토큰 발급 ===
+customerAuthController.get(
+  "/socket-token",
+  auth.verifyAuth,
+  async (req: any, res, next) => {
+    try {
+      const payload = { id: req.user!.id, userType: "CUSTOMER" as const };
+      const socketToken = jwt.sign(payload, process.env.JWT_SECRET!, {
+        expiresIn: "5m",
+      });
+      res.json({ socketToken, expInSec: 300 });
     } catch (error) {
       next(error);
     }
