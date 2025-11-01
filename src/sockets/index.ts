@@ -13,6 +13,7 @@ import { verifySocketAuth } from "./auth"; // 소켓 연결 인증 미들웨어
 import { customerRoom, moverRoom } from "./rooms"; // 유저/기사 전용 룸 네이밍 유틸
 import { bindIo } from "./emitters"; // emitters.ts에서 io 인스턴스 접근 가능하게 바인딩
 // (선택) Redis 어댑터 연결 import { createAdapter } from "@socket.io/redis-adapter"; ...
+import { initChatNamespace } from "./chat";
 
 /**
  * HTTP 서버 위에 Socket.IO 서버를 얹고, 인증/룸조인/핸들러 등을 설정한다.
@@ -111,6 +112,7 @@ export const initSocket = (httpServer: HttpServer) => {
    * - 바인딩 실패/중복을 방지하기 위해 앱 부팅 시점에 1회만 호출
    */
   bindIo(io);
+  initChatNamespace(io); //공개채팅 네임스페이스 활성화
 
   return io;
 };
