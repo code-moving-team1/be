@@ -43,4 +43,19 @@ export const PaymentsRepository = {
       data: { status: "APPROVED", approvedAt: new Date(), raw },
     });
   },
+
+  // ✅ userId 기준 조회 (cursor 기반, 최신순)
+  findManyByUserId(params: {
+    userId: number;
+    limitPlusOne: number;
+    cursor?: number;
+  }) {
+    const { userId, limitPlusOne, cursor } = params;
+    return prisma.payment.findMany({
+      where: { userId },
+      orderBy: { id: "desc" },
+      take: limitPlusOne,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+  },
 };
