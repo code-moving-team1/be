@@ -95,6 +95,19 @@ export class LikesController {
     });
   }
 
+  // 기사의 좋아요 갯수 조회
+  static async getMoverLikeCount(req: Request, res: Response) {
+    const { moverId } = req.params;
+
+    if (!moverId) {
+      throw createError("LIKES/VALIDATION");
+    }
+
+    const likesCount = await LikesService.getMoverLikeCount(parseInt(moverId));
+
+    res.status(200).json(likesCount);
+  }
+
   // 특정 고객-기사 조합의 좋아요 상태 확인
   static async checkLikeStatus(req: Request, res: Response) {
     const customerId = (req as any).user.id;

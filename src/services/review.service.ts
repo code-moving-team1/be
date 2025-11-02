@@ -59,4 +59,16 @@ const listMyReviews = async (customerId: number, opts: FindMyReviewsOpts) => {
     });
   }
 };
-export default { create, listMyReviews };
+
+const getListByMover = async (moverId: number, page: number) => {
+  try {
+    return await reviewRepository.getListByMover(moverId, page);
+  } catch (error) {
+    throw createError("SERVER/INTERNAL", {
+      messageOverride: "이사업체별 리뷰 목록 조회 중 오류가 발생했습니다.",
+      cause: error,
+    });
+  }
+};
+
+export default { create, listMyReviews, getListByMover };

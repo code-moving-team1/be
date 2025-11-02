@@ -81,4 +81,29 @@ const listMine = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export default { create ,listMine};
+const getListByMover = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const moverId = Number(req.params.moverId);
+    const page = Number(req.query.page);
+    if (!Number.isFinite(moverId)) {
+      return next(
+        createError("REQUEST/VALIDATION", {
+          messageOverride: "유효하지 않은 기사ID입니다.",
+          details: { raw: req.params.moverId },
+        })
+      );
+    }
+
+    const result = await reviewService.getListByMover(moverId, page);
+
+    return res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export default { create, listMine, getListByMover };
