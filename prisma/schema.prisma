@@ -101,6 +101,11 @@ enum BookingStatus {
   COMPLETED // 작업 완료(리뷰 가능)
 }
 
+enum PaymentStatus {
+  APPROVED
+  FAILED
+}
+
 model Customer {
   id                   Int                   @id @default(autoincrement())
   name                 String                @db.VarChar(50)
@@ -403,4 +408,18 @@ model Booking {
   @@index([moverId])
   @@index([status])
   @@index([serviceDate])
+}
+
+model Payment {
+  id         Int           @id @default(autoincrement())
+  provider   String // "toss"
+  paymentKey String        @unique
+  orderId    String        @unique
+  amount     Int
+  userId     Int
+  userType   String // "CUSTOMER" | "MOVER"
+  status     PaymentStatus
+  approvedAt DateTime?
+  raw        Json?
+  createdAt  DateTime      @default(now())
 }
