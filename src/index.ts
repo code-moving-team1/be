@@ -20,6 +20,7 @@ import { createError, HttpError } from "./utils/HttpError";
 import type { ErrorRequestHandler } from "express";
 import http from "http";
 import { initSocket } from "./sockets";
+import paymentsRoutes from "./routes/payments.routes";
 
 const app = express();
 
@@ -81,6 +82,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api", cronRoutes);
 app.use("/api/likes", likesRoutes);
+app.use("/api/payments", paymentsRoutes);
 app.use("/reviews", reviewRoutes);
 app.get("/health", (_req, res) => res.send("ok"));
 
