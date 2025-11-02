@@ -66,9 +66,11 @@ router.post("/toss/confirm", auth.verifyAuth, async (req: any, res, next) => {
   } catch (err: any) {
     // 토스 응답 그대로 보여주기 (디버그에 중요)
     if (err.response) {
-      return res
-        .status(err.response.status || 500)
-        .json({ message: "toss confirm failed", data: err.response.data });
+      // 토스가 보낸 원본 에러를 그대로 보여주기
+      return res.status(err.response.status || 500).json({
+        message: "toss confirm failed",
+        toss: err.response.data, // <- code, message, reason 뽑을 수 있음
+      });
     }
     next(err);
   }
