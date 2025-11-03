@@ -14,6 +14,26 @@ const getProfile = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const getMyProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = Number((req as any).user?.id);
+    const userType = (req as any).user?.userType;
+    if (userType !== "MOVER") {
+      throw createError("AUTH/FORBIDDEN", {
+        messageOverride: "해당 페이지는 기사 회원만 접근 가능합니다.",
+      });
+    }
+    const result = await moverService.getProfile(id);
+    return res.status(200).json(result);
+  } catch (e) {
+    next(e);
+  }
+};
+
 const getList = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filters = req.query;
@@ -122,6 +142,7 @@ const updateBasicInfo = async (
 
 export default {
   getProfile,
+  getMyProfile,
   getList,
   getLikesList,
   updateInitProfile,

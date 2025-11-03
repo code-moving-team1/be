@@ -528,12 +528,10 @@ export async function getProfile(id: number) {
     include: {
       moverRegions: true,
       moverServiceTypes: true,
-      reviews: { include: { customer: { select: { name: true } } } },
       _count: {
         select: {
           likes: true,
-          reviews: true,
-          quotes: { where: { status: "ACCEPTED" } },
+          bookings: true,
         },
       },
     },
@@ -543,18 +541,9 @@ export async function getProfile(id: number) {
     throw createError("USER/NOT_FOUND");
   }
 
-  const li = [0, 0, 0, 0, 0, 0];
-
-  for (const review of result.reviews) {
-    const rating = review.rating;
-    if (Rating.isValid(rating) && li[rating] !== undefined) {
-      li[rating] = li[rating] + 1;
-    }
-  }
-
   const { password, naverId, googleId, kakaoId, ...rest } = result;
 
-  return { ratings_count: li, ...rest };
+  return rest;
 }
 
 export default {

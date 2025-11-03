@@ -116,4 +116,55 @@ const findByCustomer = async (
   };
 };
 
-export default { findByCustomer };
+const getListByMover = async (moverId: number, page = 1) => {
+  const where = { moverId };
+
+  // 레이팅별 카운트 조회
+  const ratingGroups = await prisma.review.groupBy({
+    by: ["rating"],
+    where,
+    _count: {
+      rating: true,
+    },
+  });
+
+  // 레이팅별 카운트를 객체로 변환 (1~5점)
+  const ratingCounts: Record<number, number> = {
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+  };
+
+  ratingGroups.forEach((group) => {
+    ratingCounts[group.rating] = group._count.rating;
+  });
+
+  // 리뷰 목록 조회
+  const reviews = await prisma.review.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      content: true,
+      rating: true,
+      createdAt: true,
+      updatedAt: true,
+      customer: { select: { name: true, id: true } },
+    },
+    take: 5,
+    skip: (page - 1) * 5,
+  });
+
+  // 전체 리뷰 개수
+  const total = reviews.length;
+
+  return {
+    reviews,
+    ratingCounts,
+    total,
+  };
+};
+
+export default { findByCustomer, getListByMover };

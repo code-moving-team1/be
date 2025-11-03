@@ -19,6 +19,9 @@ router.post("/delete-all", verifyAuth, LikesController.deleteAllLikes);
 // 고객의 좋아요 목록 조회
 router.get("/customer", verifyAuth, LikesController.getCustomerLikes);
 
+// 기사의 좋아요 갯수 조회
+router.get("/mover-count/:moverId", LikesController.getMoverLikeCount);
+
 // 기사의 좋아요 목록 조회
 // router.get("/mover/:moverId", LikesController.getMoverLikes);
 
