@@ -124,7 +124,7 @@ model Customer {
   lastLoginAt          DateTime?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
-  points               Int                   @default(0)
+  points               Int?                  @default(0)
   customerServiceTypes CustomerServiceType[]
   likes                Likes[]
   moveRequests         MoveRequest[]
@@ -163,7 +163,7 @@ model Mover {
   lastLoginAt         DateTime?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
-  points              Int                  @default(0)
+  points              Int?                 @default(0)
   moverServiceTypes   MoverServiceType[]
   moverRegions        MoverRegion[]
   likes               Likes[]
