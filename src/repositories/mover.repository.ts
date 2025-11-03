@@ -356,7 +356,8 @@ export async function getList({
     ? ` AND (m.nickname ILIKE '%${searchText}%' OR m.introduction ILIKE '%${searchText}%' OR m.description ILIKE '%${searchText}%')`
     : "";
   const whereClause =
-    `WHERE m."isActive" = true AND m.deleted = false` + searchConditions;
+    `WHERE m."hasProfile" = true AND m."isActive" = true AND m.deleted = false` +
+    searchConditions;
 
   // 그룹화 후 필터 (HAVING 절에서 처리)
   let havingConditions: string[] = [];

@@ -33,15 +33,6 @@ export const searchMoveRequests = async (
   const { page, pageSize, sort } = filters;
   const where = buildMoveRequestWhere(filters);
 
-  // ✅ 옵션으로만 동작: 내가 낸 건(노멀 견적)은 상태와 무관하게 포함
-  // if (includeMyHistory && moverId) {
-  //   // where.status는 이미 ACTIVE로 세팅되어 있음 → OR 로 추가
-  //   (where as any).OR = [
-  //     { status: "ACTIVE" },
-  //     { quotes: { some: { moverId, type: "NORMAL" } } },
-  //   ];
-  // }
-
   //전체 개수(페이지네이션 용)
   const [total, data] = await Promise.all([
     //total - 전체 개수 - 페이지네이션용
@@ -52,23 +43,6 @@ export const searchMoveRequests = async (
       skip: (page - 1) * pageSize,
       take: pageSize,
       orderBy: sort ? { [sort.field]: sort.order } : { createdAt: "desc" },
-      // ...(moverId && {
-      //   include: {
-      //     quotes: {
-      //       where: { moverId },
-      //       take: 1,
-      //     },
-      //   },
-      // }),
-
-      // include:moverId
-      // ?{
-      //   quotes:{
-      //     where:{moverId},
-      //     take:1, //본인 견적만 하나
-      //   },
-      // }
-      // :null,
 
       //moverId 가 있으면 해당 무버가 낸 견적 1개만 가져옴
       // - moverId가 없으면 → 모든 견적(quotes)을 포함시킴
@@ -165,10 +139,6 @@ function buildMoveRequestWhere(
     where.status = { in: status };
   }
 
-  // if (status && status.length > 0) {
-  //   where.status = { in: status }; // status : ACTIVE로 req가 와야 적용됨
-  // }
-
   if (dateFrom || dateTo) {
     where.moveDate = {
       ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
@@ -194,18 +164,6 @@ const getListByCustomer = async (customerId: number, isActive = true) => {
     orderBy: { createdAt: "asc" },
   });
 };
-
-// const getListByCustomer = async (customerId: number, isActive = true) => {
-//   const moveStatus = isActive
-//     ? MoveRequestStatus.ACTIVE
-//     : MoveRequestStatus.FINISHED || MoveRequestStatus.COMPLETED;
-//   const result = await prisma.moveRequest.findMany({
-//     where: { customerId, status: moveStatus },
-//     orderBy: { createdAt: "asc" },
-//   });
-
-//   return result;
-// };
 
 const updateToCompleted = async (id: number) => {
   const result = await prisma.moveRequest.update({
