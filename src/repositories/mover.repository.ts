@@ -490,7 +490,7 @@ export async function getLikesList(customerId: number) {
     FROM "Mover" m
     INNER JOIN "Likes" l ON l."moverId" = m.id AND l."customerId" = ${customerId}
     LEFT JOIN "MoverServiceType" mst ON mst."moverId" = m.id
-    WHERE m."isActive" = true AND m.deleted = false
+    WHERE m."hasProfile" = true AND m."isActive" = true AND m.deleted = false
     GROUP BY m.id
     ORDER BY l.createdAt DESC
     LIMIT 3
