@@ -403,6 +403,7 @@ export async function getList({
     SELECT 
       m.id,
       m.img,
+      m.name,
       m.nickname,
       m.career,
       m.introduction,
@@ -464,6 +465,7 @@ export async function getLikesList(customerId: number) {
     SELECT 
       m.id,
       m.img,
+      m.name,
       m.nickname,
       m.career,
       m.introduction,
