@@ -1,6 +1,6 @@
 // src/controllers/cron.controller.ts
 import { Request, Response, NextFunction } from "express";
-import { completeOverdueBookings } from "../services/cron.service";
+import { completeOverdueBookings,finishOverdueMoveRequests } from "../services/cron.service";
 import { createError } from "../utils/HttpError";
 
 const completeBookings = async (req: Request, res: Response, next: NextFunction) => {
@@ -27,4 +27,34 @@ const completeBookings = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-export default { completeBookings };
+
+/**
+ * 오늘(Asia/Seoul) 00:00 기준으로 이미 지난 moveRequest 중
+ * - status = ACTIVE
+ * - booking = null
+ * 을 FINISHED 로 전환한다.
+ * 
+ * Optional: ?preview=true  -> 실제 변경 없이 대상만 반환
+ */
+const finishOverdueMoveRequestsHandler = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const preview = String(req.query.preview ?? "false") === "true";
+    const result = await finishOverdueMoveRequests({ preview });
+    return res.status(200).json({
+      message: preview
+        ? "Preview only (no updates applied)"
+        : "MoveRequest finish sweep finished",
+      ...result,
+    });
+  } catch (err) {
+    next(
+      createError("SERVER/INTERNAL", {
+        cause: err,
+        messageOverride: "finishOverdueMoveRequests 실행 중 오류가 발생했습니다.",
+      })
+    );
+  }
+};
+
+
+export default { completeBookings , finishOverdueMoveRequests: finishOverdueMoveRequestsHandler };
