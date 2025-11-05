@@ -148,5 +148,9 @@ X-Cron-Token: SuperPowerfulRandomSecret
 
 { "source": "postman" }
 
+###(테스트용 업데이트안하고 목록만반환) moveRequest의 status가 ACTIVE인 것중에 moveDate가 이미지난거 ACTIVE -> FINISHED로 
+POST https://be-production-df89.up.railway.app/api/internal/cron/finish-move-requests?preview=true
+X-Cron-Token: SuperPowerfulRandomSecret
+
 ### 내가 작성한 리뷰 리스트(고객아이디로 로그인)
 GET http://localhost:4000/api/reviews/my?page=1&pageSize=10&sort=recent

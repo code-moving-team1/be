@@ -347,6 +347,85 @@ function buildMoveRequestSentEstimatesWhere(
   return where;
 }
 
+// 대상 조회 (ACTIVE & booking=null & moveDate < cutoffUtc)
+const findOverdueActiveWithoutBooking = async (cutoffUtc: Date) => {
+  return prisma.moveRequest.findMany({
+    where: {
+      status: "ACTIVE",
+      moveDate: { lt: cutoffUtc },
+      booking: null, // 1:1 optional 관계 -> Booking 없는 것만
+    },
+    orderBy: { moveDate: "asc" },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          region: true,
+        },
+      },
+      quotes: {
+        select: {
+          id: true,
+          status: true,
+          price: true,
+          moverId: true,
+          type: true,
+        },
+      },
+      reviews: true,
+      booking: true,
+    },
+  });
+};
+
+//일괄 상태 업데이트
+const finishManyByIds = (ids: number[]) => {
+  if (ids.length === 0)
+    return Promise.resolve({ count: 0 } as { count: number });
+  return prisma.moveRequest.updateMany({
+    where: {
+      id: { in: ids },
+      status: "ACTIVE",
+      booking: null,
+    },
+    data: { status: "FINISHED" },
+  });
+};
+
+// id 목록으로 상세 재조회(응답용)
+const findByIds = (ids: number[]) => {
+  if (ids.length === 0) return Promise.resolve([]);
+  return prisma.moveRequest.findMany({
+    where: { id: { in: ids } },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          region: true,
+        },
+      },
+      quotes: {
+        select: {
+          id: true,
+          status: true,
+          price: true,
+          moverId: true,
+          type: true,
+        },
+      },
+      reviews: true,
+      booking: true,
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+};
+
 export default {
   createMoveRequest,
   getMoveRequestById,
@@ -356,4 +435,7 @@ export default {
   getListByCustomerWhenDirect,
   getDirectList,
   searchSentEstimatesMoveRequests,
+  findOverdueActiveWithoutBooking,
+  finishManyByIds,
+  findByIds,
 };
