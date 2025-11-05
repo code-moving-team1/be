@@ -11,7 +11,7 @@ const baseGoogleOptions = {
 export const googleMoverStrategy = new GoogleStrategy(
   {
     ...baseGoogleOptions,
-    callbackURL: "/api/auth/mover/google/callback",
+    callbackURL: `${process.env.FRONTEND_URL}/api/auth/mover/google/callback`,
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -48,7 +48,7 @@ export const googleMoverStrategy = new GoogleStrategy(
 export const googleCustomerStrategy = new GoogleStrategy(
   {
     ...baseGoogleOptions,
-    callbackURL: "/api/auth/customer/google/callback",
+    callbackURL: `${process.env.FRONTEND_URL}/api/auth/customer/google/callback`,
   },
   async (accessToken, refreshToken, profile, done) => {
     try {

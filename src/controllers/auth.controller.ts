@@ -10,36 +10,13 @@ import {
 } from "../utils/cookies";
 import jwt from "jsonwebtoken";
 
-const REDIRECT_CUSTOMER = "/auth/success?type=customer";
-const REDIRECT_MOVER = "/auth/success?type=mover";
-
-/**
- * 쿠키를 포함한 리다이렉트 (HTML 응답 사용)
- * 리버스 프록시 환경에서도 쿠키가 정상적으로 저장되도록 함
- */
-function redirectWithCookies(res: express.Response, redirectUrl: string) {
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  const fullUrl = `${frontendUrl}${redirectUrl}`;
-
-  // HTML 응답으로 리다이렉트 (쿠키는 응답 헤더에 포함됨)
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
-
-  console.log("리다이렉트..");
-  console.log(res.cookie);
-
-  res.status(200).send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta http-equiv="refresh" content="0;url=${fullUrl}">
-        <script>window.location.href = "${fullUrl}";</script>
-      </head>
-      <body>
-        <p>리다이렉트 중... <a href="${fullUrl}">여기를 클릭하세요</a></p>
-      </body>
-    </html>
-  `);
-}
+// Next.js API Route로 리다이렉트 (프론트엔드 URL 포함)
+const REDIRECT_CUSTOMER =
+  (process.env.FRONTEND_URL || "http://localhost:3000") +
+  "/api/auth/success?type=customer";
+const REDIRECT_MOVER =
+  (process.env.FRONTEND_URL || "http://localhost:3000") +
+  "/api/auth/success?type=mover";
 
 const moverAuthController = express.Router();
 
@@ -224,8 +201,8 @@ moverAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (쿠키 포함)
-      redirectWithCookies(res, REDIRECT_MOVER);
+      // 성공 시 Next.js API Route로 직접 리다이렉트 (쿠키는 응답 헤더에 포함됨)
+      res.redirect(REDIRECT_MOVER);
     } catch (error) {
       next(error);
     }
@@ -255,8 +232,8 @@ customerAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (쿠키 포함)
-      redirectWithCookies(res, REDIRECT_CUSTOMER);
+      // 성공 시 Next.js API Route로 직접 리다이렉트 (쿠키는 응답 헤더에 포함됨)
+      res.redirect(REDIRECT_CUSTOMER);
     } catch (error) {
       next(error);
     }
@@ -303,8 +280,8 @@ moverAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (쿠키 포함)
-      redirectWithCookies(res, REDIRECT_MOVER);
+      // 성공 시 Next.js API Route로 직접 리다이렉트 (쿠키는 응답 헤더에 포함됨)
+      res.redirect(REDIRECT_MOVER);
     } catch (error) {
       next(error);
     }
@@ -334,8 +311,8 @@ customerAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (쿠키 포함)
-      redirectWithCookies(res, REDIRECT_CUSTOMER);
+      // 성공 시 Next.js API Route로 직접 리다이렉트 (쿠키는 응답 헤더에 포함됨)
+      res.redirect(REDIRECT_CUSTOMER);
     } catch (error) {
       next(error);
     }
@@ -384,8 +361,8 @@ moverAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (쿠키 포함)
-      redirectWithCookies(res, REDIRECT_MOVER);
+      // 성공 시 Next.js API Route로 직접 리다이렉트 (쿠키는 응답 헤더에 포함됨)
+      res.redirect(REDIRECT_MOVER);
     } catch (error) {
       next(error);
     }
@@ -415,8 +392,8 @@ customerAuthController.get(
       setAccessTokenCookie(res, accessToken);
       setRefreshTokenCookie(res, refreshToken);
 
-      // 성공 시 리다이렉트 (쿠키 포함)
-      redirectWithCookies(res, REDIRECT_CUSTOMER);
+      // 성공 시 Next.js API Route로 직접 리다이렉트 (쿠키는 응답 헤더에 포함됨)
+      res.redirect(REDIRECT_CUSTOMER);
     } catch (error) {
       next(error);
     }

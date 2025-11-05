@@ -11,7 +11,7 @@ const baseNaverOptions = {
 export const naverMoverStrategy = new NaverStrategy(
   {
     ...baseNaverOptions,
-    callbackURL: "/api/auth/mover/naver/callback",
+    callbackURL: `${process.env.FRONTEND_URL}/api/auth/mover/naver/callback`,
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -46,7 +46,7 @@ export const naverMoverStrategy = new NaverStrategy(
 export const naverCustomerStrategy = new NaverStrategy(
   {
     ...baseNaverOptions,
-    callbackURL: "/api/auth/customer/naver/callback",
+    callbackURL: `${process.env.FRONTEND_URL}/api/auth/customer/naver/callback`,
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
