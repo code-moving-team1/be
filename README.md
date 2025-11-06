@@ -18,23 +18,31 @@
 
 <!-- Language / Runtime -->
 
+### 🔧 Language / Runtime
+
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 
 <!-- Web Framework -->
 
+### 🧭 Web Framework
+
 ![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
 
 <!-- Auth -->
+
+### 🔐 Auth
 
 ![Passport](https://img.shields.io/badge/Passport-34E27A?style=for-the-badge&logo=passport&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=json-web-tokens&logoColor=white)
 ![Google](https://img.shields.io/badge/Google%20OAuth-4285F4?style=for-the-badge&logo=google&logoColor=white)
 ![Kakao](https://img.shields.io/badge/Kakao%20Login-FFCD00?style=for-the-badge&logo=kakaotalk&logoColor=000)
 ![Naver](https://img.shields.io/badge/Naver%20Login-03C75A?style=for-the-badge&logo=naver&logoColor=white)
-![Session](https://img.shields.io/badge/Session-Express--Session-6DB33F?style=for-the-badge&logo=databricks&logoColor=white)
+![Session](https://img.shields.io/badge/Session-6DB33F?style=for-the-badge&logo=databricks&logoColor=white)
 
 <!-- Database / Infra -->
+
+### 🗃️ Database / Infra
 
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
@@ -43,9 +51,13 @@
 
 <!-- Realtime -->
 
+### ⚡ Realtime
+
 ![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
 
 <!-- Validation / Utils -->
+
+### 🧪 Validation / Utils
 
 ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white)
 ![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
@@ -55,7 +67,15 @@
 ![dotenv](https://img.shields.io/badge/dotenv-000000?style=for-the-badge)
 ![Toss Payments](https://img.shields.io/badge/Toss%20Payments-0064FF?style=for-the-badge)
 
+<!-- Background Jobs / Scheduling -->
+
+### ⏰ Background Jobs / Scheduling
+
+![Cron](https://img.shields.io/badge/Cron-4B5563?style=for-the-badge)
+
 <!-- Tooling -->
+
+### 🧰 Tooling
 
 ![github](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white) ![discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white) ![notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white) ![Swagger](https://img.shields.io/badge/-Swagger-%23Clojure?style=for-the-badge&logo=swagger&logoColor=white) ...etc
 
