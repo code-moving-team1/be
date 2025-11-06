@@ -114,19 +114,28 @@
 ### [정우진]
 
 - 기초세팅
-- 테스트 파일 구현
-  - 전체적인 테스트 설정 세팅
-  - plan, quote, chatRoom, chat 모델 e2e 테스트 파일 구현
-- Plan API 구현
-- Quote API 구현
+  - 백엔드폴더링 (3-Layer Architecture)
+  - schema.prisma 설계
+- moveRequest API 구현
+  - 고객이 이사요청 생성, 조건에 맞는 이사요청 리스트, 이사요청 단건 상세 조회
+- Review API 구현
+  - 고객이 작성가능한 리뷰 리스트, 리뷰작성, 내가 작성한 리뷰 리스트
+- Notification API 구현
+  - 알림 목록 조회, UnreadCnt, 단건읽음, 모두읽음
+  - Socket.IO로 이용해 실시간 알림
+- Booking API 구현
+  - 견적확정시 transaction 로직 구현
 - Chat API 구현
-  - 이미지 및 동영상을 s3에 업로드 및 Presigned URL 구현
-  - 이미지가 업로드 될 때 최적화 해주는 lambda 함수 구현 및 적용
-- ChatRoom API 구현
-  - 웹소켓을 이용해 구현
-- 다른 종류의 데이터베이스 transaction 구현
-  - 의존성 최소화를 위해 AOP를 통한 데코레이터로 구현
+  - Socket.IO로 이용해 실시간 알림
+  - 연결 시 초기 chat:history 전달, chat:message 브로드캐스트, chat:system 입·퇴장/오류 메시지
+- Payment API 구현
+  - 결제승인, 결제내역조회
+- transaction 구현
+  - 견적확정 tx : Booking 생성, MoveRequest/Quote 상태 변경, 관련 알림 발송까지 단일 트랜잭션으로 처리, 멱등성 키(idempotency key)로 중복 확정 방지, 실패 시 전체 롤백
+  - 리뷰생성 tx : Review 생성, 기사 별점, totalReviews 갱신, 알림 발송 까지 단일 트랜잭션으로 처리, bookingId findUnique로 중복 방지, 실패 시 전체 롤백
+  - 결제승인 tx : payments draft 생성, 토스api confirm확인, user의 points 상승, payments draft update ,status APPROVED 인지 확인하여 중복승인 방지, 실패시 전체 롤백
 - 스케줄러 구현 및 적용
+  - Cron 엔드포인트 + 크론 토큰 방식으로 Railway 배포환경에 크론연동하여 운영 자동화
 
 </br>
 
@@ -252,5 +261,34 @@
 ├── test.http
 └── tsconfig.json
 
+
+```
+
+## ⚙️ 환경변수
+
+```
+NODE_ENV="production"
+
+DATABASE_URL="postgresql_url"
+
+JWT_SECRET="JWT_SECRET"
+SESSION_SECRET="SESSION_SECRET"
+CRON_TOKEN="CRON_TOKEN_SECRET"
+
+CORS_ORIGIN="https://fe-real.vercel.app,http://localhost:3000"
+FRONTEND_URL="https://fe-real.vercel.app"
+# FRONTEND_URL="http://localhost:3000"
+
+GOOGLE_CLIENT_ID="GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="GOOGLE_CLIENT_SECRET"
+
+NAVER_CLIENT_ID="NAVER_CLIENT_ID"
+NAVER_CLIENT_SECRET="NAVER_CLIENT_SECRET"
+
+KAKAO_CLIENT_ID="KAKAO_CLIENT_ID"
+KAKAO_CLIENT_SECRET="KAKAO_CLIENT_SECRET"
+
+TOSS_SECRET_KEY="test_sk_TOSS_SECRET_KEY"
+TOSS_TEST=true
 
 ```
