@@ -18,11 +18,48 @@
 
 <img src="https://img.shields.io/badge/NestJS-000000?style=for-the-badge&logo=nestjs&logoColor=E0234E"> ![Typescript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) <img src="https://img.shields.io/badge/Passport-000000?style=for-the-badge&logo=passport&logoColor=34E27A"> ![JWT](https://img.shields.io/badge/json%20web%20tokens-323330?style=for-the-badge&logo=json-web-tokens&logoColor=pink) ![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=Jest&logoColor=white) ![Socketio](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
 
-![postgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white) ![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white) ![Mongoose](https://img.shields.io/badge/Mongoose-880000?style=for-the-badge&logo=mongoose&logoColor=#880000) ![Redis](https://img.shields.io/badge/redis-FF4438.svg?&style=for-the-badge&logo=redis&logoColor=white) ![BullMQ](https://img.shields.io/badge/Bullmq-A8A59B.svg?&style=for-the-badge&logo=&logoColor=white)
+![postgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white) ![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white) ![Neon](https://img.shields.io/badge/NEON-000000?style=for-the-badge&logo=&logoColor=white)
 
-<img src="https://img.shields.io/badge/AWS EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white"> <img src="https://img.shields.io/badge/AWS Lambda-FF9900?style=for-the-badge&logo=awslambda&logoColor=white"> <img src="https://img.shields.io/badge/AWS S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white"> <img src="https://img.shields.io/badge/AWS RDS-527FFF?style=for-the-badge&logo=amazonrds&logoColor=white"> <img src="https://img.shields.io/badge/nginx-009639?style=for-the-badge&logo=nginx&logoColor=green"> <img src="https://img.shields.io/badge/PM2-2B037A?style=for-the-badge&logo=PM2&logoColor=green"> ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white) ![Kibana](https://img.shields.io/badge/Kibana-005571?style=for-the-badge&logo=kibana&logoColor=white)
+<img src="https://img.shields.io/badge/Railway-131415?style=for-the-badge&logo=railway&logoColor=white"> <img src="https://img.shields.io/badge/AWS Lambda-FF9900?style=for-the-badge&logo=awslambda&logoColor=white">
 
-![github](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white) ![slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white) ![discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white) ![notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white) ![Swagger](https://img.shields.io/badge/-Swagger-%23Clojure?style=for-the-badge&logo=swagger&logoColor=white) ...etc
+![github](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white) ![discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white) ![notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white) ![Swagger](https://img.shields.io/badge/-Swagger-%23Clojure?style=for-the-badge&logo=swagger&logoColor=white) ...etc
+
+
+<!-- Language / Runtime -->
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+
+<!-- Web Framework -->
+![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white)
+
+<!-- Auth -->
+![Passport](https://img.shields.io/badge/Passport-Auth-34E27A?style=for-the-badge&logo=passport&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=json-web-tokens&logoColor=white)
+![Google](https://img.shields.io/badge/Google%20OAuth-Enabled-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![Kakao](https://img.shields.io/badge/Kakao%20Login-Enabled-FFCD00?style=for-the-badge&logo=kakaotalk&logoColor=000)
+![Naver](https://img.shields.io/badge/Naver%20Login-Enabled-03C75A?style=for-the-badge&logo=naver&logoColor=white)
+![Session](https://img.shields.io/badge/Session-Express--Session-6DB33F?style=for-the-badge&logo=databricks&logoColor=white)
+
+<!-- ORM / DB -->
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+
+<!-- Realtime -->
+![Socket.io](https://img.shields.io/badge/Socket.io-Realtime-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
+
+<!-- Validation / Utils -->
+![Zod](https://img.shields.io/badge/Zod-Validation-3E67B1?style=for-the-badge&logo=zod&logoColor=white)
+![Axios](https://img.shields.io/badge/Axios-HTTP%20Client-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
+![bcrypt](https://img.shields.io/badge/bcrypt-Hashing-338DFF?style=for-the-badge&logo=keepassxc&logoColor=white)
+![CORS](https://img.shields.io/badge/CORS-Enabled-EB5424?style=for-the-badge)
+![Morgan](https://img.shields.io/badge/Morgan-Logger-000000?style=for-the-badge)
+![dotenv](https://img.shields.io/badge/dotenv-Env-000000?style=for-the-badge)
+
+<!-- Tooling -->
+![tsx](https://img.shields.io/badge/tsx-Dev%20Runner-000000?style=for-the-badge)
+![TypeScript%20Compiler](https://img.shields.io/badge/tsc-Build-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Prisma%20Migrate](https://img.shields.io/badge/Prisma-Migrate-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+
 
 </br>
 
