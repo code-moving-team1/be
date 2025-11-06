@@ -353,7 +353,7 @@ export async function getList({
 }: MoverListFilters) {
   // WHERE절 생성
   const searchConditions = searchText
-    ? ` AND (m.nickname ILIKE '%${searchText}%' OR m.introduction ILIKE '%${searchText}%' OR m.description ILIKE '%${searchText}%')`
+    ? ` AND (m.name ILIKE '%${searchText}%' OR m.introduction ILIKE '%${searchText}%' OR m.description ILIKE '%${searchText}%')`
     : "";
   const whereClause =
     `WHERE m."hasProfile" = true AND m."isActive" = true AND m.deleted = false` +
