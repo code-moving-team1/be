@@ -12,7 +12,7 @@ const baseKakaoOptions = {
 export const kakaoMoverStrategy = new KakaoStrategy(
   {
     ...baseKakaoOptions,
-    callbackURL: "/api/auth/mover/kakao/callback",
+    callbackURL: `${process.env.FRONTEND_URL}/api/auth/mover/kakao/callback`,
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -48,7 +48,7 @@ export const kakaoMoverStrategy = new KakaoStrategy(
 export const kakaoCustomerStrategy = new KakaoStrategy(
   {
     ...baseKakaoOptions,
-    callbackURL: "/api/auth/customer/kakao/callback",
+    callbackURL: `${process.env.FRONTEND_URL}/api/auth/customer/kakao/callback`,
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
