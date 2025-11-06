@@ -42,26 +42,19 @@
 ### [이예원]
 
 - Auth API 구현
-  - 인증/인가 guard 및 decorator
-  - 구글, 카카오, 네이버 OAuth
-- User API 구현
+  - 인증/인가 토큰 기능 구현
+  - 구글, 카카오, 네이버 OAuth Strategy 및 기능 구현 
+  - 미들웨어를 통한 인증/인가 기능 구현
+- Mover, Customer API 구현
 - Profile API 구현
-- Follow API 구현
-- Review API 구현
-- Notification API 구현
-  - SSE 통한 실시간 알림 추가
-- Payment API 구현
-  - PortOne PG사 연동 결제
-- UserStats 구현
-  - 메시지큐를 통해 연산 작업 비동기 처리
-  - 자주 조회하는 데이터 캐싱
-- PointLog 구현
-  - 메시지큐를 통해 포인트 작업 비동기 처리
-  - 실패한 작업 스케줄링
-- 시스템/네트워크 및 애플리케이션 로그 구현
-  - Lambda를 통한 Cloudwatch 로그 자동 수집
-- GitHub Actions CI/CD 구현
-- Swagger 설정 세팅
+- DirectQuoteRequest API 구현
+- Likes API 구현
+- MoveRequest /customer용 API 구현
+- Quote API 구현
+- Review 조회 API 구현
+- DB 스키마 설계 및 구현
+- 에러 카탈로그 일부 작성
+
 
 ### [정우진]
 
@@ -87,9 +80,8 @@
 - **도메인 모델**: 주요 개념을 도메인 모델로 추상화하여 복잡한 비즈니스 로직을 관리.
 
 - **트랜잭션 처리**:
-  - Prisma와 MongoDB 모두에 적용할 수 있는 데코레이터 구현 및 적용.
-  - 도메인 모델을 적용시키며 의존성을 격리하기 위해 AOP를 활용해 데코레이터 방식으로 트랜잭션을 적용.
-- **AWS Lambda**: 이미지 업로드 시 최적화 및 별도로 저장, CloudWatch 로그 트리거 시 OpenSearch로 전송.
+  - 동시 처리가 필요한 기능에 대해서 prisma transaction을 이용하여 데이터 정합성 관리
+
 - **로그 관리:** 실시간 로그 모니터링 및 시각화
   - 애플리케이션 로그: Winston → AWS CloudWatch → Lambda → OpenSearch(Kibana)
   - 시스템 및 네트워크 로그: Node Exporter / NginX Exporer → Prometheus → Grafana
