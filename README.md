@@ -96,7 +96,9 @@
   - 구글, 카카오, 네이버 OAuth Strategy 및 기능 구현
   - 미들웨어를 통한 인증/인가 기능 구현
 - Mover, Customer API 구현
+  - 트랜잭션 이용
 - Profile API 구현
+  - 트랜잭션 이용
 - DirectQuoteRequest API 구현
 - Likes API 구현
 - MoveRequest /customer용 API 구현
