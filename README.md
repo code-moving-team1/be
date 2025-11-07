@@ -1,16 +1,14 @@
-## 무빙
+# 무빙
 
-![logo](https://i.imgur.com/bvVO9xc.png)
+> ## 2025.04.10 - 2025.11.10 </br>
+>
+> ### 코드잇 스프린트 풀스택 7기 고급 프로젝트 1팀 (BackEnd) </br>
+>
+> [FrontEnd Github 바로가기 🔗](https://github.com/code-moving-team1/fe)
 
-> 2025.09.16 - 2025.02.26 </br>
-> 코드잇 스프린트 풀스택 7기 고급 프로젝트 1팀 (Backend)
-> </br> > [Frontend Github 바로가기 🔗](https://github.com/code-moving-team1/fe)
-
-</br>
-
-- [무빙] 홈페이지: https://fe-real.vercel.app/
-- 🗂️ 팀 문서: https://www.notion.so/Team-1-Moving-2a302c9248648010ae36ea03ecd05cf5
-- 🔍 API 명세: https://www.notion.so/API-2a302c92486481ebaf28e05f9798ca47
+- [[무빙] 홈페이지](https://fe-real.vercel.app)
+- [🗂️ 팀 문서](https://www.notion.so/Team-1-Moving-2a302c9248648010ae36ea03ecd05cf5?source=copy_link)
+- [🔍 API 명세](https://www.notion.so/API-2a302c92486481ebaf28e05f9798ca47)
 
 </br>
 
@@ -83,12 +81,9 @@
 
 ## 💁 구성원
 
-|                              정우진                              |                           이예원                            |
-| :--------------------------------------------------------------: | :---------------------------------------------------------: |
-|            ![imgur](https://i.imgur.com/lVepEn6.png)             |          ![imgur](https://i.imgur.com/YLesOfA.png)          |
-|                             **팀장**                             |                        **백엔드장**                         |
-| 노션 관리, 백엔드 GitHub 관리, 중간 발표 자료 제작, 배포 및 관리 | 회의록 관리, 발표 자료 정리, Lambda 배포, 데이터베이스 관리 |
-|        [Github 바로가기 🔗](https://github.com/Maybeiley)        |    [Github 바로가기 🔗](https://github.com/taeyeonkim94)    |
+|           정우진            |      이예원      |      김태홍      |
+| :-------------------------: | :--------------: | :--------------: |
+| **팀장** <br/> 배포 및 관리 | GitHub 이슈 관리 | GitHub 이슈 관리 |
 
 </br>
 
@@ -98,7 +93,7 @@
 
 - Auth API 구현
   - 인증/인가 토큰 기능 구현
-  - 구글, 카카오, 네이버 OAuth Strategy 및 기능 구현 
+  - 구글, 카카오, 네이버 OAuth Strategy 및 기능 구현
   - 미들웨어를 통한 인증/인가 기능 구현
 - Mover, Customer API 구현
 - Profile API 구현
@@ -109,7 +104,6 @@
 - Review 조회 API 구현
 - DB 스키마 설계 및 구현
 - 에러 카탈로그 일부 작성
-
 
 ### [정우진]
 
@@ -135,7 +129,15 @@
   - 리뷰생성 tx : Review 생성, 기사 별점, totalReviews 갱신, 알림 발송 까지 단일 트랜잭션으로 처리, bookingId findUnique로 중복 방지, 실패 시 전체 롤백
   - 결제승인 tx : payments draft 생성, 토스api confirm확인, user의 points 상승, payments draft update ,status APPROVED 인지 확인하여 중복승인 방지, 실패시 전체 롤백
 - 스케줄러 구현 및 적용
+
   - Cron 엔드포인트 + 크론 토큰 방식으로 Railway 배포환경에 크론연동하여 운영 자동화
+
+  ### [김태홍]
+
+- 에러 핸들러 구현
+  - 에러 카탈로그 작성 및 규격화
+- 이사 요청(일반 & 지정) 견적 작성 API 구현
+- 견적 상세 페이지 (일반 & 기사) API 구현
 
 </br>
 
@@ -144,6 +146,7 @@
 - **도메인 모델**: 주요 개념을 도메인 모델로 추상화하여 복잡한 비즈니스 로직을 관리.
 
 - **트랜잭션 처리**:
+
   - 동시 처리가 필요한 기능에 대해서 prisma transaction을 이용하여 데이터 정합성 관리
 
 - **로그 관리:** 실시간 로그 모니터링 및 시각화
