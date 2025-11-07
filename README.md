@@ -143,26 +143,19 @@
 
 ## ⚓️ 백엔드 전략
 
-- **도메인 모델**: 주요 개념을 도메인 모델로 추상화하여 복잡한 비즈니스 로직을 관리.
-
-- **트랜잭션 처리**:
-
-  - 동시 처리가 필요한 기능에 대해서 prisma transaction을 이용하여 데이터 정합성 관리
-
-- **로그 관리:** 실시간 로그 모니터링 및 시각화
-  - 애플리케이션 로그: Winston → AWS CloudWatch → Lambda → OpenSearch(Kibana)
-  - 시스템 및 네트워크 로그: Node Exporter / NginX Exporer → Prometheus → Grafana
-- **실시간 채팅 기능**: `@nestjs/websockets`와 `Socket.io`를 통해 클라이언트 간 실시간 메시지 전달 및 관리.
+- **3-Layer Architecture**: Controller, Service, Repository 3 계층으로 나누어 관심사 분리
+- **에러 모델**: ERROR_CATALOG로 상태코드/노출메시지/로그레벨 일원화
+- **트랜잭션 처리**: 동시성 처리가 필요한 기능에 대해서 prisma transaction을 이용하여 데이터 정합성 관리
+- **실시간 채팅 기능**: `Socket.io`를 통해 메시지를 중계해 실시간 메시지 전달 및 관리.
+- **실시간 알림**: `Socket.io`를 통해 서버에서 클라이언트에 알림 전송.
 - **스케줄러**: `Cron jobs`를 사용하여 주기적으로 실행되는 작업을 자동화.
-- **결제 시스템**: 외부 PG사 결제 API와의 연동을 통해 결제 처리 자동화.
-- **실시간 알림**: SSE 단방향 통신을 통해 서버에서 클라이언트에 알림 전송.
-- **캐싱 및 메시지 큐**: Redis를 활용하여 자주 조회하는 데이터를 캐싱하고 BullMQ를 통해 연산 작업 등을 메시지 큐로 비동기 처리
+- **결제 시스템**: 토스페이먼츠 결제 API와의 연동을 통해 결제 처리 자동화.
+
 
 </br>
 
 ## 🍰 프로젝트 회고
 
-- 백엔드 결과물: https://www.goforme.duckdns.org
 - 발표 자료: https://www.notion.so/Team-1-Moving-2a302c9248648010ae36ea03ecd05cf5
 - 시연 영상: https://www.notion.so/Team-1-Moving-2a302c9248648010ae36ea03ecd05cf5
 - ERD : https://dbdiagram.io/d/68a68254466887cb45ec0a2f
